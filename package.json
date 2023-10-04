@@ -1,0 +1,40 @@
+{
+  "name": "unconventional-pg-queries",
+  "version": "1.0.0",
+  "description": "A lightweight query builder for postgres",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cloudflare-extension/unconventional-pg-queries.git"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "pages",
+    "query",
+    "builder",
+    "postgres",
+    "pg",
+    "database"
+  ],
+  "author": "Dean Mauro",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cloudflare-extension/unconventional-pg-queries/issues"
+  },
+  "scripts": {
+    "clean": "tsc --build --clean",
+    "build": "rm -rf dist && tsc --build",
+    "watch": "tsc --watch",
+    "lint": "eslint . --ext js,jsx,ts,tsx",
+    "format": "eslint . --ext js,jsx,ts,tsx --fix"
+  },
+  "homepage": "https://github.com/cloudflare-extension/unconventional-pg-queries#readme",
+  "dependencies": {
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231002.0",
+    "@types/pg": "^8.10.3",
+    "typescript": "^5.2.2"
+  }
+}
