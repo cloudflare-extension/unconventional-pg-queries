@@ -59,6 +59,9 @@ LIMIT 1
     ]
 }
 ```
+::: tip
+When multiple `where` clauses are used, the clauses will be AND-ed together by default. The inclusion of `andOr` in the above definition is purely illustrative and not required.
+:::
 **Generated SQL**
 ```sql
 SELECT * FROM public.users fromref 
@@ -77,9 +80,6 @@ LIMIT 1
     createdAt: "2023-08-15T16:38:54.248Z"
 }
 ```
-::: tip
-When multiple `where` clauses are used, the clauses will be AND-ed together by default. The inclusion of `andOr` in the above definition is purely illustrative and not required.
-:::
 ### Fetch with relations
 
 **Definition**
@@ -116,6 +116,9 @@ SELECT toref.*, fromref.id as tmpfromref from public.users fromref
 INNER JOIN public.pets toref ON fromref."id" = toref."ownerId" 
 WHERE fromref."id" IN (1); 
 ```
+::: info NOTE
+When expanding relations, multiple SQL queries will be executed. Notice that in this example, one query was made to retrieve the user and then a second query was made to retrieve all pets whose `ownerId` matched the user's `id`.
+:::
 **Response**
 ```json
 {
@@ -141,6 +144,3 @@ WHERE fromref."id" IN (1);
     ]
 }
 ```
-::: info NOTE
-When expanding relations, multiple SQL queries will be executed. Notice that in this example, one query was made to retrieve the user and then a second query was made to retrieve all pets whose `ownerId` matched the user's `id`.
-:::
