@@ -15,7 +15,7 @@ const response = await selectOne(client, definition);
 
 ## Examples
 
-### Fetch an item by id
+### Fetch by id
 
 **Definition**
 ```ts
@@ -47,7 +47,7 @@ LIMIT 1
     createdAt: "2023-08-15T16:38:54.248Z"
 }
 ```
-### Fetch an item by multiple conditions
+### Fetch by multiple conditions
 
 **Definition**
 ```ts
@@ -80,7 +80,7 @@ LIMIT 1
 ::: tip
 When multiple `where` clauses are used, the clauses will be AND-ed together by default. The inclusion of `andOr` in the above definition is purely illustrative and not required.
 :::
-### Fetch an item with relations expanded
+### Fetch with relations
 
 **Definition**
 ```ts

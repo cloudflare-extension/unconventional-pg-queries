@@ -7,6 +7,9 @@ export default defineConfig({
   appearance: {
     initialValue: 'dark'
   },
+  markdown: {
+    toc: { level: [1, 2, 3] }
+  },
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -41,6 +44,8 @@ export default defineConfig({
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/cloudflare-extension/unconventional-pg-queries' }
-    ]
+    ],
+
+    outline: { level: [2,3] }
   }
 })
