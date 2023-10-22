@@ -15,7 +15,6 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' }
     ],
-
     sidebar: [
       {
         text: 'Guide',
@@ -41,11 +40,12 @@ export default defineConfig({
         ]
       }
     ],
-
     socialLinks: [
       { icon: 'github', link: 'https://github.com/cloudflare-extension/unconventional-pg-queries' }
     ],
-
-    outline: { level: [2,3] }
+    outline: { level: [2,3] },
+    search: {
+      provider: 'local'
+    }
   }
 })
