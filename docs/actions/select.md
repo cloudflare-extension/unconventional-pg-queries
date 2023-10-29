@@ -43,6 +43,7 @@ LIMIT 1
     email: "john.smith@test.com",
     firstName: "John",
     lastName: "Smith",
+    age: 27,
     isActive: true,
     createdAt: "2023-08-15T16:38:54.248Z"
 }
@@ -76,6 +77,7 @@ LIMIT 1
     email: "john.smith@test.com",
     firstName: "John",
     lastName: "Smith",
+    age: 27,
     isActive: true,
     createdAt: "2023-08-15T16:38:54.248Z"
 }
@@ -126,6 +128,7 @@ When expanding relations, multiple SQL queries will be executed. Notice that in 
     email: "john.smith@test.com",
     firstName: "John",
     lastName: "Smith",
+    age: 27,
     isActive: true,
     createdAt: "2023-08-15T16:38:54.248Z",
     pets: [
