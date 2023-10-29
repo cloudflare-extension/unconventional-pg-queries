@@ -111,9 +111,11 @@ VALUES ($1,$2,$3,$4,$5),($6,$7,$8,$9,$10) RETURNING *
 ```
 
 ### Upsert
-Adding the `conflict` field with `action: ConflictResolution.doUpdate` to your query definition converts the insert method into an upsert. In the example below, if a row already exists with the `email: john.smith@test.com` and the `email` column has a unique constraint on it, that row will be updated instead of inserted anew.
+Adding the `conflict` field with `action: ConflictResolution.doUpdate` to your query definition converts the insert method into an upsert. In the example below, if a row already exists with  `email: john.smith@test.com` and the `email` column has a unique constraint on it, that row will be updated instead of inserted anew.
 
-Alternatively `action: ConflictResolution.doNothing` will skip that piece of data.
+Alternatively `action: ConflictResolution.doNothing` will ignore the conflict and do neither an insert nor an update.
+
+Note that Postgres only supports conflict resolution on a single column (e.g. `email`) or on a composite key (e.g. `(firstName, lastName)`). Conflict resolution is not supported on two distinct columns simultaneously.
 
 **Definition**
 ```ts
