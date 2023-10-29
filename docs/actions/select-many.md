@@ -1,4 +1,4 @@
-# Select
+# Select Many
 
 _Retrieves multiple records from the database_
 
@@ -36,7 +36,7 @@ const response = await selectMany(client, definition);
 ```
 **Generated SQL**
 ```sql
-SELECT * FROM public.user fromref
+SELECT * FROM public.users fromref
 WHERE (fromref."age")::int < 30
 ```
 **Response**
@@ -89,7 +89,7 @@ WHERE (fromref."age")::int < 30
 :::
 **Generated SQL**
 ```sql
-SELECT * FROM public.user fromref 
+SELECT * FROM public.users fromref 
 WHERE fromref."lastName" IS NULL 
 AND (fromref."isActive")::boolean = true  
 ```
@@ -122,34 +122,113 @@ AND (fromref."isActive")::boolean = true
 
 **Definition**
 ```ts
+{
+    table: 'public.users',
+    page: {
+        field: 'id',
+        cursor: 10
+    },
+    limit: 10
+}
 ```
 **Generated SQL**
 ```sql
+SELECT * FROM public.users fromref
+WHERE (fromref."id")::int > 10
+LIMIT 10
 ```
+::: tip
+Results can be paginated in descending order as well. In that case, the second line above would change to `WHERE (fromref."id")::int < 10 ORDER BY fromref."id" DESC`.
+:::
 **Response**
 ```json
+[
+    {
+        id: 11,
+        email: "king.kong@test.com",
+        firstName: "King",
+        lastName: "Kong",
+        age: 100,
+        isActive: true,
+        createdAt: "2023-08-15T16:38:54.248Z"
+    },
+    ...
+    {
+        id: 20,
+        email: "charlie.brown@test.com",
+        firstName: "Charlie",
+        lastName: "Brown",
+        age: 10,
+        isActive: true,
+        createdAt: "2023-08-15T16:38:54.248Z"
+    }
+]
 ```
 
 ### Order Results
 
 **Definition**
 ```ts
+{
+    table: 'public.users',
+    order: [
+        {
+            field: 'isActive',
+            direction: SqlDirection.Desc
+        },
+        {
+            field: 'age',
+            direction: SqlDirection.Asc
+        }
+    ]
+}
 ```
 **Generated SQL**
 ```sql
+SELECT * FROM public.users fromref
+ORDER BY fromref."isActive" DESC, fromref."age" ASC
 ```
 **Response**
 ```json
+[
+    {
+        id: 20,
+        email: "charlie.brown@test.com",
+        firstName: "Charlie",
+        lastName: "Brown",
+        age: 10,
+        isActive: true,
+        createdAt: "2023-08-15T16:38:54.248Z"
+    },
+    ...
+    {
+        id: 99,
+        email: "elrond.peredhel@test.com",
+        firstName: "Elrond",
+        lastName: "Peredhel",
+        age: 6437,
+        isActive: true,
+        createdAt: "2023-08-15T16:38:54.248Z"
+    }
+]
 ```
 
 ### Count Results
 
 **Definition**
 ```ts
+{
+    table: 'public.users',
+    count: true
+}
 ```
 **Generated SQL**
 ```sql
+SELECT COUNT(*) FROM public.user fromref
 ```
 **Response**
 ```json
+{
+    count: "100"
+}
 ```
