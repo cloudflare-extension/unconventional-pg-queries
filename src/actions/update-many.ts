@@ -43,7 +43,7 @@ export async function updateMany(client: Client, body: PGQuery) {
     valueHolders += `,(${recordValueHolders.slice(1)})`;
   });
 
-  const text = `UPDATE ${body.table} ${FromAlias} SET ${setClause.slice(1)} from (values ${valueHolders.slice(1)}) as ${TempFromAlias}(${columns.join()}) where ${FromAlias}."${IdField}" = ${TempFromAlias}."${IdField}" RETURNING *`;
+  const text = `UPDATE ${body.table} ${FromAlias} SET ${setClause.slice(1)} from (values ${valueHolders.slice(1)}) as ${TempFromAlias}(${columns.join()}) WHERE ${FromAlias}."${IdField}" = ${TempFromAlias}."${IdField}" RETURNING *`;
   const response = await client.query(text, values);
 
   return response.rows;
