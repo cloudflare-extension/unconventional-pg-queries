@@ -35,8 +35,7 @@ export default defineConfig({
               { text: 'Where', link: '/concepts/where' },
               { text: 'Relations', link: '/concepts/relations' }
             ] 
-          },
-          { text: 'Examples', link: '/examples' }
+          }
         ]
       }
     ],
