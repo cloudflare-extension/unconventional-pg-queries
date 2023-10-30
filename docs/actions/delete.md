@@ -33,7 +33,7 @@ The method name is `destroy` because 'delete' is a protected keyword in javascri
 ```
 **Generated SQL**
 ```sql
-DELETE FROM public.user fromref
+DELETE FROM public.users fromref
 WHERE (fromref."id")::int = 1 
 RETURNING *
 ```

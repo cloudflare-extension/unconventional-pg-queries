@@ -35,9 +35,10 @@ const response = await update(client, definition);
 ```
 **Generated SQL**
 ```sql
-UPDATE public.user fromref 
+UPDATE public.users fromref 
 SET "isActive" = $1 
-WHERE fromref."lastName" IN ('Smith', 'Gray') RETURNING *
+WHERE fromref."lastName" IN ('Smith', 'Gray')
+RETURNING *
 ```
 ```values
 [ false ]

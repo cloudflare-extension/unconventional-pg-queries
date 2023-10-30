@@ -80,8 +80,9 @@ Inserts and updates use [parameterized queries](https://node-postgres.com/featur
 ```
 **Generated SQL**
 ```sql
-INSERT INTO public.user ("email","firstName","lastName","age","isActive") 
-VALUES ($1,$2,$3,$4,$5),($6,$7,$8,$9,$10) RETURNING *
+INSERT INTO public.users ("email","firstName","lastName","age","isActive") 
+VALUES ($1,$2,$3,$4,$5),($6,$7,$8,$9,$10)
+RETURNING *
 ```
 ```values
 [ 'dorian.gray@test.com', 'Dorian', 'Gray', 25, true, 'basil.hallward@test.com', 'Basil', 'Hallward', 40, false ]
@@ -136,7 +137,7 @@ Note that Postgres only supports conflict resolution on a single column (e.g. `e
 ```
 **Generated SQL**
 ```sql
-INSERT INTO public.user ("email","firstName","lastName","type","isActive")
+INSERT INTO public.users ("email","firstName","lastName","type","isActive")
 VALUES ($1,$2,$3,$4,$5)
 ON CONFLICT ("email") DO UPDATE SET "email" = EXCLUDED."email","firstName" = EXCLUDED."firstName","lastName" = EXCLUDED."lastName","age" = EXCLUDED."age","isActive" = EXCLUDED."isActive"
 RETURNING *

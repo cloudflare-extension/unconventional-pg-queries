@@ -224,7 +224,7 @@ ORDER BY fromref."isActive" DESC, fromref."age" ASC
 ```
 **Generated SQL**
 ```sql
-SELECT COUNT(*) FROM public.user fromref
+SELECT COUNT(*) FROM public.users fromref
 ```
 **Response**
 ```json

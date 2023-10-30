@@ -40,10 +40,11 @@ Because this update happens in a single operation, all records in the `data` arr
 ```
 **Generated SQL**
 ```sql
-UPDATE public.user fromref 
+UPDATE public.users fromref 
 SET "firstName" = tmpfromref."firstName","lastName" = tmpfromref."lastName" 
 from (values ($1::int,$2::text,$3::text),($4::int,$5::text,$6::text)) as tmpfromref("id","firstName","lastName") 
-WHERE fromref."id" = tmpfromref."id" RETURNING *
+WHERE fromref."id" = tmpfromref."id"
+RETURNING *
 
 ```
 ```values
