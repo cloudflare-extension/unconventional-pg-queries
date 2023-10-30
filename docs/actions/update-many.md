@@ -16,9 +16,9 @@ const response = await updateMany(client, definition);
 
 ### Update multiple records by id
 
-This method accepts an array of record data and updates the included fields. Each record *must* contain its primary key (e.g. `id`) as an identifier. 
+This method accepts an array of records and updates the fields included in them. Each record **must** contain its primary key (e.g. `id`) as an identifier. 
 
-Because this update happens in a single operation, all records in the `data` array *must* also contain the same fields or an error is thrown. It is not possible to update, for example, `firstName` on one record and `firstName` and `lastName` on another. See the example below for a model.
+Because this update happens in a single operation, all records in the `data` array **must** also contain the same fields or an error is thrown. It is not possible to update, for example, `firstName` on one record and `firstName` and `lastName` on another. Look to the example below as a model.
 
 **Definition**
 ```ts
