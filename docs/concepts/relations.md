@@ -28,7 +28,7 @@ In the object-oriented world, we have the luxury of nested objects to show a con
 }
 ```
 
-This trivial structure is more cumbersome to represent in a relational database and requires the use of multiple tables connected by a **relation**. The above would be represented by a `users` table, an `animals` table, and a foreign key on the `ownerId` field. We won't delve into the topic further as better explanations already exist online, but will demonstrate how relations can be selected--or "expanded"--on a parent object using this library.
+This trivial structure is more cumbersome to represent in a relational database and requires the use of multiple tables connected by a **relation**. The above would be structured with a `users` table, an `animals` table, and a foreign key on the `ownerId` field. We won't delve into the topic further as better explanations already exist online, but will demonstrate how relations can be selected--or "expanded"--on a parent object using this library.
 
 There are 4 types of relations that can be represented by adding the `expand` field to your `select` or `selectMany` query:
 
