@@ -11,7 +11,7 @@ const response = await update(client, definition);
 ## Configurable fields
 - table
 - data
-- where
+- [where](/concepts/where)
 
 ## Examples
 

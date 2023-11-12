@@ -12,7 +12,7 @@ The method name is `destroy` because 'delete' is a protected keyword in javascri
 :::
 ## Configurable fields
 - table
-- where
+- [where](/concepts/where)
 
 ## Examples
 

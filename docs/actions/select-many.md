@@ -10,12 +10,12 @@ const response = await selectMany(client, definition);
 
 ## Configurable fields
 - table
-- where
-- expand
-- order
-- page
-- limit
-- count
+- [where](/concepts/where)
+- [expand](/concepts/relations)
+- [page](#paginate-results)
+- [limit](#paginate-results)
+- [order](#order-results)
+- [count](#count-results)
 
 ## Examples
 

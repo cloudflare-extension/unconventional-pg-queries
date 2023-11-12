@@ -10,8 +10,8 @@ const response = await selectOne(client, definition);
 
 ## Configurable fields
 - table
-- where
-- expand
+- [where](/concepts/where)
+- [expand](/concepts/relations)
 
 ## Examples
 

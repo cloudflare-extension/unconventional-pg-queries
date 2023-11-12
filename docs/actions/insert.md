@@ -11,7 +11,7 @@ const response = await insert(client, definition);
 ## Configurable fields
 - table
 - data
-- conflict
+- [conflict](#upsert)
 
 ## Examples
 
