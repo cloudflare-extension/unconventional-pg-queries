@@ -33,7 +33,7 @@
     "docs:preview": "vitepress preview docs",
     "docs:serve": "vitepress serve docs"
   },
-  "homepage": "https://github.com/cloudflare-extension/unconventional-pg-queries#readme",
+  "homepage": "https://cloudflare-extension.github.io/unconventional-pg-queries",
   "dependencies": {
     "pg": "^8.11.3"
   },
