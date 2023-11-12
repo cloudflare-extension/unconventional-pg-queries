@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "src",
     "target": "esnext",
     "lib": [
       "ESNext"
@@ -10,6 +12,8 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": false,
   }
 }

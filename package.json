@@ -14,7 +14,8 @@
     "builder",
     "postgres",
     "pg",
-    "database"
+    "database",
+    "orm"
   ],
   "author": "Dean Mauro",
   "license": "MIT",
@@ -26,7 +27,10 @@
     "build": "rm -rf dist && tsc --build",
     "watch": "tsc --watch",
     "lint": "eslint . --ext js,jsx,ts,tsx",
-    "format": "eslint . --ext js,jsx,ts,tsx --fix"
+    "format": "eslint . --ext js,jsx,ts,tsx --fix",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "homepage": "https://github.com/cloudflare-extension/unconventional-pg-queries#readme",
   "dependencies": {
@@ -35,6 +39,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20231002.0",
     "@types/pg": "^8.10.3",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitepress": "^1.0.0-rc.22"
   }
 }
