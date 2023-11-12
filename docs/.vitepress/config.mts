@@ -20,7 +20,7 @@ export default defineConfig({
         text: 'Guide',
         items: [
           { text: 'Getting Started', link: '/getting-started' },
-          { text: 'Actions', 
+          { text: 'Actions', link: '/actions/index',
             items: [
               { text: 'Select', link: '/actions/select' },
               { text: 'Select Many', link: '/actions/select-many' },
