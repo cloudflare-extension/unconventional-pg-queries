@@ -243,4 +243,27 @@ The bitwise AND operator is useful when storing flag enums in an integer column,
 
 ## Combining Clauses
 
+Filtering on multiple columns at once is possible using the `andOr` field. E.g.
+
+```ts
+{
+    table: 'public.users',
+    where: [ // [!code focus]
+        { field: 'lastName', operator: SqlWhereOperator.Like, value: 'S%' }, // [!code focus]
+        { andOr: AndOr.Or, field: 'lastName', operator: SqlWhereOperator.IsNull, value: null }, // [!code focus]
+        { andOr: AndOr.And, field: 'age', operator: SqlWhereOperator.Gt, value: 30 }, // [!code focus]
+    ] // [!code focus]
+}
+```
+
+```sql
+SELECT * FROM public.users fromref
+WHERE fromref."lastName" LIKE 'S%' // [!code focus]
+OR fromref."lastName" IS NULL // [!code focus]
+AND (fromref."age")::int > 30 // [!code focus]
+```
+:::tip NOTE
+Boolean operators are combined from left to right. Complex combinations involving parenthetical statements like (A OR B) AND (C OR D OR E) are not currently possible.
+:::
+
 ## Filtering on JSON Columns
