@@ -267,3 +267,45 @@ Boolean operators are combined from left to right. Complex combinations involvin
 :::
 
 ## Filtering on JSON Columns
+
+Filtering is supported on fields nested within JSONB columns as well. To do so, specify the JSONB column in `field` as usual, but also add the `jsonPath` field with the sub-field(s) to target. E.g.
+
+```ts
+{
+    table: 'public.users',
+    where: [ // [!code focus]
+        { // [!code focus]
+            field: 'metadata', // [!code focus]
+            jsonPath: ['website'], // [!code focus]
+            operator: SqlWhereOperator.Like, // [!code focus]
+            value: '%.com' // [!code focus]
+        }, // [!code focus]
+    ] // [!code focus]
+}
+```
+
+```sql
+SELECT * FROM public.users fromref
+WHERE fromref."metadata"->>'website' LIKE '%.com' // [!code focus]
+```
+
+Or in the case of a nested sub-field:
+
+```ts
+{
+    table: 'public.users',
+    where: [ // [!code focus]
+        { // [!code focus]
+            field: 'metadata', // [!code focus]
+            jsonPath: ['links', 'avatar'], // [!code focus]
+            operator: SqlWhereOperator.IsNotNull, // [!code focus]
+            value: null // [!code focus]
+        }, // [!code focus]
+    ] // [!code focus]
+}
+```
+
+```sql
+SELECT * FROM public.users fromref
+WHERE WHERE fromref."metadata"->'links'->>'avatar' IS NOT NULL // [!code focus]
+```
