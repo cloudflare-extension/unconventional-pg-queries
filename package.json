@@ -30,7 +30,8 @@
     "format": "eslint . --ext js,jsx,ts,tsx --fix",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "docs:serve": "vitepress serve docs"
   },
   "homepage": "https://github.com/cloudflare-extension/unconventional-pg-queries#readme",
   "dependencies": {
