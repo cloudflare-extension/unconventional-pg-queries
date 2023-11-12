@@ -15,7 +15,7 @@ const response = await selectOne(client, definition);
 
 ## Examples
 
-### Fetch by id
+### Select by id
 
 **Definition**
 ```ts
@@ -48,7 +48,7 @@ LIMIT 1
     createdAt: "2023-08-15T16:38:54.248Z"
 }
 ```
-### Fetch by multiple conditions
+### Select by multiple conditions
 
 **Definition**
 ```ts
@@ -82,7 +82,7 @@ LIMIT 1
     createdAt: "2023-08-15T16:38:54.248Z"
 }
 ```
-### Fetch with relations
+### Select with relations
 
 **Definition**
 ```ts

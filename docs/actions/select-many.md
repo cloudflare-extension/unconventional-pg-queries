@@ -19,7 +19,7 @@ const response = await selectMany(client, definition);
 
 ## Examples
 
-### Fetch by id
+### Select by id
 
 **Definition**
 ```ts
@@ -64,7 +64,7 @@ WHERE (fromref."age")::int < 30
 ]
 ```
 
-### Fetch by multiple conditions
+### Select by multiple conditions
 
 **Definition**
 ```ts
