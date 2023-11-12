@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Unconventional Queries",
   description: "A lightweight query builder for postgres",
+  base: '/unconventional-pg-queries/',
   appearance: {
     initialValue: 'dark'
   },
