@@ -34,12 +34,12 @@
     "docs:serve": "vitepress serve docs"
   },
   "homepage": "https://cloudflare-extension.github.io/unconventional-pg-queries",
-  "dependencies": {
+  "peerDependencies": {
     "pg": "^8.11.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20231002.0",
     "@types/pg": "^8.10.3",
+    "pg": "^8.11.3",
     "typescript": "^5.2.2",
     "vitepress": "^1.0.0-rc.22"
   }

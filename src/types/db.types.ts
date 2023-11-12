@@ -55,8 +55,6 @@ export const andOrPattern = /\s(?=AND|OR)/;
 
 export interface Expansion {
   type: OneOrMany;
-  name: string;
-  parentName?: string;
   fromTable: string;
   fromField: string;
   toTable: string;
@@ -95,9 +93,7 @@ export interface SqlConflict {
   constraint?: string[];
 }
 
-export interface PGQuery {
-  action: SqlAction;
-  type: OneOrMany;
+export interface QueryDefinition {
   table: string;
   expand?: Record<string, Expansion>;
   where?: SqlWhere[];
@@ -106,6 +102,5 @@ export interface PGQuery {
   page?: SqlPaginate;
   limit?: number;
   data?: Object | Object[];
-  return?: string[];
   count?: boolean;
 }

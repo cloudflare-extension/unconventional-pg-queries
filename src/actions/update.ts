@@ -1,9 +1,9 @@
-import { PGQuery } from "../types/db.types";
+import { QueryDefinition } from "../types/db.types";
 import { Client } from "pg";
 import { FromAlias, compileWhere } from "../utils/query.utils";
 
 /** Updates one record in a PostgreSQL database */
-export async function update(client: Client, body: PGQuery) {
+export async function update(client: Client, body: QueryDefinition) {
   if (!body.data) throw new Error('No data provided');
   const data = Array.isArray(body.data) ? body.data[0] : body.data;
 

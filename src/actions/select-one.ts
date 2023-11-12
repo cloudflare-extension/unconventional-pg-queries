@@ -1,10 +1,10 @@
-import { PGQuery } from "../types/db.types";
+import { QueryDefinition } from "../types/db.types";
 import { Client } from "pg";
 import { isEmpty } from "../utils/object.utils";
 import { FromAlias, compileWhere, withRelations } from "../utils/query.utils";
 
 /** Retrieves one record from a PostgreSQL database */
-export async function selectOne(client: Client, body: PGQuery) {
+export async function selectOne(client: Client, body: QueryDefinition) {
   const where = compileWhere(body.where);
 
   const mainRes = await client.query(`SELECT * FROM ${body.table} ${FromAlias} ${where} LIMIT 1`);

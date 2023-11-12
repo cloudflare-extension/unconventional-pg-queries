@@ -1,10 +1,10 @@
-import { PGQuery } from "../types/db.types";
+import { QueryDefinition } from "../types/db.types";
 import { Client } from "pg";
 import { FromAlias, IdField, TempFromAlias } from "../utils/query.utils";
 import { getType } from "../utils/object.utils";
 
 /** Updates one record in a PostgreSQL database */
-export async function updateMany(client: Client, body: PGQuery) {
+export async function updateMany(client: Client, body: QueryDefinition) {
   if (!body.data) throw new Error('No data provided');
   const data = Array.isArray(body.data) ? body.data : [body.data];
 

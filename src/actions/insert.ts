@@ -1,8 +1,8 @@
 import { Client } from "pg";
-import { PGQuery } from "../types/db.types";
+import { QueryDefinition } from "../types/db.types";
 
 /** Inserts one record into a PostgreSQL database */
-export async function insert(client: Client, body: PGQuery) {
+export async function insert(client: Client, body: QueryDefinition) {
   if (!body.data) throw new Error('No data provided');
 
   const data = Array.isArray(body.data) ? body.data : [body.data];
