@@ -307,5 +307,5 @@ Or in the case of a nested sub-field:
 
 ```sql
 SELECT * FROM public.users fromref
-WHERE WHERE fromref."metadata"->'links'->>'avatar' IS NOT NULL // [!code focus]
+WHERE fromref."metadata"->'links'->>'avatar' IS NOT NULL // [!code focus]
 ```
