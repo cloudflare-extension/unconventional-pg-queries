@@ -15,21 +15,9 @@ export enum SqlWhereOperator {
   BitwiseAnd = '&'
 }
 
-export const ValidSqlOperators = Object.values<string>(SqlWhereOperator);
-export const NullSqlOperators: string[] = [SqlWhereOperator.IsNull, SqlWhereOperator.IsNotNull];
-
 export enum SqlDirection {
   Asc = 'ASC',
   Desc = 'DESC'
-}
-
-export const ValidSortDirections = Object.values<string>(SqlDirection);
-
-export enum SqlAction {
-  Select = 'SELECT',
-  Insert = 'INSERT',
-  Update = 'UPDATE',
-  Delete = 'DELETE'
 }
 
 export enum OneOrMany {
@@ -50,8 +38,6 @@ export enum AndOr {
   And = 'AND',
   Or = 'OR'
 }
-
-export const andOrPattern = /\s(?=AND|OR)/;
 
 export interface Expansion {
   type: OneOrMany;
