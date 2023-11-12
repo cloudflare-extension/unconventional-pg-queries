@@ -1,9 +1,8 @@
 ---
-# https://vitepress.dev/reference/default-theme-home-page
 layout: home
 
 hero:
-  name: "Unconventional PG Queries"
+  name: "Unconventional Queries"
   text: "A lightweight query builder for postgres"
   tagline: Never write SQL manually again
   actions:
@@ -13,8 +12,10 @@ hero:
 
 features:
   - title: Getting Started
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Queries
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+    details: From installation to execution in 1 minute flat
+    link: /getting-started
+  - title: Actions
+    details: How to Select, Insert, Update, Delete, etc.
+    link: /actions/select
 ---
 
