@@ -1,10 +1,10 @@
-import { PGQuery } from "../types/db.types";
+import { QueryDefinition } from "../types/db.types";
 import { Client } from "pg";
 import { isEmpty } from "../utils/object.utils";
 import { FromAlias, compileOrder, compileWhere, withRelations } from "../utils/query.utils";
 
 /** Retrieves multiple records from a PostgreSQL database */
-export async function selectMany(client: Client, body: PGQuery) {
+export async function selectMany(client: Client, body: QueryDefinition) {
   const where = compileWhere(body.where, body.page, body.order);
   const limit = body.limit ? `LIMIT ${body.limit}` : '';
   const order = compileOrder(body.order);
