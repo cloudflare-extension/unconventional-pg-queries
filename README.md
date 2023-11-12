@@ -1,4 +1,4 @@
-# Unconventional Queries
+# [Unconventional Queries](https://cloudflare-extension.github.io/unconventional-pg-queries)
 
 [![GitHub](https://img.shields.io/github/license/cloudflare-extension/unconventional-pg-queries)](https://github.com/cloudflare-extension/unconventional-pg-queries/blob/main/LICENSE)
 [![npm](https://img.shields.io/npm/v/unconventional-pg-queries)](https://www.npmjs.com/package/unconventional-pg-queries)
