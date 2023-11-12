@@ -14,7 +14,8 @@
     "builder",
     "postgres",
     "pg",
-    "database"
+    "database",
+    "orm"
   ],
   "author": "Dean Mauro",
   "license": "MIT",
