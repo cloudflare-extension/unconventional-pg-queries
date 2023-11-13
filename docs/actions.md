@@ -1,11 +1,3 @@
----
-prev:
-  text: 'Getting Started'
-  link: '/getting-started'
-next:
-  text: 'Select'
-  link: '/actions/select'
----
 # Actions
 
 Unconventional Queries supports these database actions: [Select](select.md), [Insert](insert.md), [Update](./update.md), [Delete](./delete.md), [Select Many](./select-many.md), [Update Many](update-many.md).
