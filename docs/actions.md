@@ -1,6 +1,6 @@
 # Actions
 
-Unconventional Queries supports these database actions: [Select](select.md), [Insert](insert.md), [Update](./update.md), [Delete](./delete.md), [Select Many](./select-many.md), [Update Many](update-many.md).
+Unconventional Queries supports these database actions: [Select](./actions/select.md), [Insert](./actions/insert.md), [Update](./actions/update.md), [Delete](./actions/delete.md), [Select Many](./actions/select-many.md), [Update Many](./actions/update-many.md).
 
 ## Definition
 
@@ -9,14 +9,14 @@ Each action is customized by a query definition, which has the following propert
 |Prop|Type|Supported Actions|Description|
 | ------------- | :-----------: | :-------: | :---- |
 | table | string | All | The database table on which to execute the query (Required by all) |
-| [where](../concepts/where.md) | [SqlWhere](#sqlwhere) | [Select](select.md)<br />[Select Many](./select-many.md)<br />[Update](./update.md)<br />[Delete](./delete.md) | Filters the query response by a particular set of criteria |
-| data | Object \| Object[] | [Insert](./insert.md)<br />[Update](./update.md)<br />[Update Many](./update-many.md) | The data to insert or update in a table |
-| [expand](../concepts/relations.md) | Record<string, [Expansion](#expansion)> | [Select](select.md)<br />[Select Many](./select-many.md) | A list of relations to expand on the response object |
-| [order](./select-many.md#order-results) | [SqlOrder[]](#sqlorder) | [Select Many](./select-many.md) | Orders the rows in the response object by a particular set of fields |
-| [page](./select-many.md#paginate-results) | [SqlPaginate](#sqlpaginate) | [Select Many](./select-many.md) | Paginates the rows in the response object |
-| [limit](./select-many.md#paginate-results) | number | [Select Many](./select-many.md) | Returns only a set number of rows |
-| [count](./select-many.md#count-results) | boolean | [Select Many](./select-many.md) | If `true`, returns the number of rows matching the query in the form `{count: <# of rows>}` |
-| [conflict](./insert.md#upsert) | [SqlConflict](#sqlconflict) | [Insert](./insert.md) | When used on an Insert query, either performs an upsert or ignores conflicts depending on which resolution is set |
+| [where](./concepts/where.md) | [SqlWhere](#sqlwhere) | [Select](./actions/select.md)<br />[Select Many](./actions/select-many.md)<br />[Update](./actions/update.md)<br />[Delete](./actions/delete.md) | Filters the query response by a particular set of criteria |
+| data | Object \| Object[] | [Insert](./actions/insert.md)<br />[Update](./actions/update.md)<br />[Update Many](./actions/update-many.md) | The data to insert or update in a table |
+| [expand](./concepts/relations.md) | Record<string, [Expansion](#expansion)> | [Select](./actions/select.md)<br />[Select Many](./actions/select-many.md) | A list of relations to expand on the response object |
+| [order](./actions/select-many.md#order-results) | [SqlOrder[]](#sqlorder) | [Select Many](./actions/select-many.md) | Orders the rows in the response object by a particular set of fields |
+| [page](./actions/select-many.md#paginate-results) | [SqlPaginate](#sqlpaginate) | [Select Many](./actions/select-many.md) | Paginates the rows in the response object |
+| [limit](./actions/select-many.md#paginate-results) | number | [Select Many](./actions/select-many.md) | Returns only a set number of rows |
+| [count](./actions/select-many.md#count-results) | boolean | [Select Many](./actions/select-many.md) | If `true`, returns the number of rows matching the query in the form `{count: <# of rows>}` |
+| [conflict](./actions/insert.md#upsert) | [SqlConflict](#sqlconflict) | [Insert](./actions/insert.md) | When used on an Insert query, either performs an upsert or ignores conflicts depending on which resolution is set |
 
 ## Types
 
