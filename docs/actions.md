@@ -1,3 +1,11 @@
+---
+prev:
+  text: 'Getting Started'
+  link: '/getting-started'
+next:
+  text: 'Select'
+  link: '/actions/select'
+---
 # Actions
 
 Unconventional Queries supports these database actions: [Select](select.md), [Insert](insert.md), [Update](./update.md), [Delete](./delete.md), [Select Many](./select-many.md), [Update Many](update-many.md).
@@ -20,7 +28,9 @@ Each action is customized by a query definition, which has the following propert
 
 ## Types
 
-Types used in the formation of a query definition object:
+Types used in the formation of a query definition object
+
+*For informational purposes. Feel free to skip to the next page for query examples.*
 
 ### Expansion
 ```ts

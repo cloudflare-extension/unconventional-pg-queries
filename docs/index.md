@@ -16,6 +16,5 @@ features:
     link: /getting-started
   - title: Actions
     details: How to Select, Insert, Update, Delete, etc.
-    link: /actions/select
+    link: /actions
 ---
-
