@@ -28,8 +28,6 @@ Types used in the formation of a query definition object
 ```ts
 interface Expansion {
   type: OneOrMany;
-  name: string;
-  parentName?: string;
   fromTable: string;
   fromField: string;
   toTable: string;
