@@ -50,5 +50,5 @@ export async function insert(client: Client, body: QueryDefinition) {
   const text = `INSERT INTO ${body.table} (${columns.join()}) VALUES ${valueHolders.slice(1)} ${onConflict} RETURNING *`;
   const response = await client.query(text, values);
 
-  return Array.isArray(body.data) ? response.rows : response.rows[0];
+  return response.rows;
 }

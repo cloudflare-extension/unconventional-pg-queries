@@ -11,5 +11,5 @@ export async function destroy(client: Client, body: QueryDefinition) {
   const text = `DELETE FROM ${body.table} ${FromAlias} ${where} RETURNING *`;
   const response = await client.query(text);
 
-  return response.rowCount > 0 ? response.rows : response.rows[0];
+  return response.rows;
 }

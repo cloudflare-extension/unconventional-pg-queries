@@ -43,15 +43,17 @@ Inserts and updates use [parameterized queries](https://node-postgres.com/featur
 :::
 **Response**
 ```json
-{
-    id: 1,
-    email: "john.smith@test.com",
-    firstName: "John",
-    lastName: "Smith",
-    age: 27,
-    isActive: true,
-    createdAt: "2023-08-15T16:38:54.248Z"
-}
+[
+    {
+        id: 1,
+        email: "john.smith@test.com",
+        firstName: "John",
+        lastName: "Smith",
+        age: 27,
+        isActive: true,
+        createdAt: "2023-08-15T16:38:54.248Z"
+    }
+]
 ```
 
 ### Insert many
@@ -147,15 +149,17 @@ RETURNING *
 ```
 **Response**
 ```json
-{
-    id: 1,
-    email: "john.smith@test.com",
-    firstName: "John",
-    lastName: "Smith",
-    age: 30,
-    isActive: true,
-    createdAt: "2023-08-15T16:38:54.248Z"
-}
+[
+    {
+        id: 1,
+        email: "john.smith@test.com",
+        firstName: "John",
+        lastName: "Smith",
+        age: 30,
+        isActive: true,
+        createdAt: "2023-08-15T16:38:54.248Z"
+    }
+]
 ```
 ::: info
 [See here](https://www.postgresql.org/docs/current/sql-insert.html#SQL-ON-CONFLICT) for more information on PostgreSQL's `ON CONFLICT` clause.

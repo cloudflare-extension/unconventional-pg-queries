@@ -24,5 +24,5 @@ export async function update(client: Client, body: QueryDefinition) {
   const text = `UPDATE ${body.table} ${FromAlias} SET ${columns.slice(2)} ${where} RETURNING *`;
   const response = await client.query(text, values);
 
-  return response.rowCount === 1 ? response.rows[0] : response.rows;
+  return response.rows;
 }
