@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import { QueryDefinition } from "../types/db.types";
+import { ConflictResolution, QueryDefinition } from "../types/db.types";
 
 /** Inserts one record into a PostgreSQL database */
 export async function insert(client: Client, body: QueryDefinition) {
