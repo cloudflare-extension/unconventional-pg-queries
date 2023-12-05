@@ -24,7 +24,7 @@ export async function insert(client: Client, body: QueryDefinition) {
       // Collect column names on first pass through
       if (recordIndex === 0) {
         columns.push(`"${key}"`);
-        if (conflictResolver) upsertSet += `,"${key}" = EXCLUDED."${key}"`;
+        if (conflictResolver?.action === ConflictResolution.doUpdate) upsertSet += `,"${key}" = EXCLUDED."${key}"`;
       }
 
       // Collect values
