@@ -54,7 +54,9 @@ export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPa
       value = `'${clause.value}'`;
     }
 
-    return `${acc}${encapsulate ? ')' : ''}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`
+    const lastClause = clauses && (clauses.length - 1 === index);
+
+    return `${acc}${encapsulate && lastClause ? ')' : ''}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`
   },
     `WHERE ${encapsulate ? '(' : ''}`);
 }
