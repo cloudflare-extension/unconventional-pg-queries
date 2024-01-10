@@ -36,6 +36,7 @@ export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPa
   if (!clauses?.length) return '';
 
   // Format clauses
+  const encapsulate = clauses.length > 1 && pagination;
   return clauses.reduce((acc, clause, index) => {
     let value = clause.value;
     const { isString, isNumber, isBoolean, isNull } = describeType(value);
@@ -53,9 +54,11 @@ export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPa
       value = `'${clause.value}'`;
     }
 
-    return `${acc}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`
+    const lastClause = clauses && (clauses.length - 1 === index);
+
+    return `${acc}${encapsulate && lastClause ? ')' : ''}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`
   },
-    'WHERE ');
+    `WHERE ${encapsulate ? '(' : ''}`);
 }
 
 /**  Converts a list of Expansion outlines to a QueryConfig object */
