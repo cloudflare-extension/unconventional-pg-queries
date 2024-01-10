@@ -15,32 +15,8 @@ export const IdField = 'id';
 
 /**  Converts a list of SqlWhere outlines to string of SQL clauses */
 export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPaginate, order?: SqlOrder[]) {
-  // Where clauses
-  let formattedWhere = '';
-  if (clauses?.length) {
-    formattedWhere = clauses.reduce((acc, clause, index) => {
-      let value = clause.value;
-      const { isString, isNumber, isBoolean, isNull } = describeType(value);
-      const isBitwise = clause.operator === SqlWhereOperator.BitwiseAnd;
-      const isArray = [SqlWhereOperator.In, SqlWhereOperator.NotIn].includes(clause.operator);
-      
-      // Format field
-      const field = getTargetField(FromAlias, clause.field, {
-        jsonPath: clause.jsonPath,
-        type: isNumber ? SqlType.Int : isBoolean ? SqlType.Boolean : undefined
-      });
 
-      // Format value
-      if (!isArray && !isNull && !isNumber && !isBoolean && !isString) {
-        value = `'${clause.value}'`;
-      }
-
-      return `${acc}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`
-    }, '');
-  };
-
-  // Pagination
-  let paginatedWhere = '';
+  // Create a clause for the pagination cursor
   if (pagination) {
     let operator = SqlWhereOperator.Gt;
 
@@ -49,14 +25,38 @@ export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPa
       if (direction === SqlDirection.Desc) operator = SqlWhereOperator.Lt;
     }
 
-    paginatedWhere = `${pagination.field} ${operator} ${pagination.cursor || ''}`;
+    clauses ||= [];
+    clauses.push({
+      field: pagination.field,
+      operator: operator,
+      value: pagination.cursor
+    });
   }
 
-  // Short circuit if no clauses
-  if (!formattedWhere && !paginatedWhere) return '';
+  if (!clauses?.length) return '';
 
-  // Return the combined clauses
-  return `WHERE ${(paginatedWhere && formattedWhere) ? `(${formattedWhere}) ${AndOr.And} ` : formattedWhere}${paginatedWhere}`;
+  // Format clauses
+  const encapsulate = clauses.length > 1 && pagination;
+  return clauses.reduce((acc, clause, index) => {
+    let value = clause.value;
+    const { isString, isNumber, isBoolean, isNull } = describeType(value);
+    const isBitwise = clause.operator === SqlWhereOperator.BitwiseAnd;
+    const isArray = [SqlWhereOperator.In, SqlWhereOperator.NotIn].includes(clause.operator);
+
+    // Format field
+    const field = getTargetField(FromAlias, clause.field, {
+      jsonPath: clause.jsonPath,
+      type: isNumber ? SqlType.Int : isBoolean ? SqlType.Boolean : undefined
+    });
+
+    // Format value
+    if (!isArray && !isNull && !isNumber && !isBoolean && !isString) {
+      value = `'${clause.value}'`;
+    }
+
+    return `${acc}${encapsulate ? ')' : ''}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`
+  },
+    `WHERE ${encapsulate ? '(' : ''}`);
 }
 
 /**  Converts a list of Expansion outlines to a QueryConfig object */
