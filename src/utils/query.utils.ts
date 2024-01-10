@@ -15,46 +15,48 @@ export const IdField = 'id';
 
 /**  Converts a list of SqlWhere outlines to string of SQL clauses */
 export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPaginate, order?: SqlOrder[]) {
-  if (!clauses?.length)
-      return '';
-
-  // Format clauses
-  const formattedWhere = clauses.reduce((acc, clause, index) => {
+  // Where clauses
+  let formattedWhere = '';
+  if (clauses?.length) {
+    formattedWhere = clauses.reduce((acc, clause, index) => {
       let value = clause.value;
       const { isString, isNumber, isBoolean, isNull } = describeType(value);
       const isBitwise = clause.operator === SqlWhereOperator.BitwiseAnd;
       const isArray = [SqlWhereOperator.In, SqlWhereOperator.NotIn].includes(clause.operator);
+      
       // Format field
       const field = getTargetField(FromAlias, clause.field, {
-          jsonPath: clause.jsonPath,
-          type: isNumber ? SqlType.Int : isBoolean ? SqlType.Boolean : undefined
+        jsonPath: clause.jsonPath,
+        type: isNumber ? SqlType.Int : isBoolean ? SqlType.Boolean : undefined
       });
+
       // Format value
       if (!isArray && !isNull && !isNumber && !isBoolean && !isString) {
-          value = `'${clause.value}'`;
+        value = `'${clause.value}'`;
       }
 
-      // Add paranthesis to the last clause if paginating
-      const addParanthesis = index === clauses.length - 1 && pagination;
+      return `${acc}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`
+    }, '');
+  };
 
-      return `${acc}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}${addParanthesis ? ')' : ''}`;
-  }, `WHERE ${pagination ? '(' : ''}`);
-
-  // Create a clause for the pagination cursor
+  // Pagination
+  let paginatedWhere = '';
   if (pagination) {
-      let operator = SqlWhereOperator.Gt;
-      if (order?.length) {
-          const direction = order.find((item) => item.field === pagination.field)?.direction;
-          if (direction === SqlDirection.Desc)
-              operator = SqlWhereOperator.Lt;
-      }
+    let operator = SqlWhereOperator.Gt;
 
-      const paginatedWhere = `${AndOr.And} ${pagination.field} ${operator} ${pagination.cursor || ''}`;
+    if (order?.length) {
+      const direction = order.find((item) => item.field === pagination.field)?.direction;
+      if (direction === SqlDirection.Desc) operator = SqlWhereOperator.Lt;
+    }
 
-      return `${formattedWhere} ${paginatedWhere}`
+    paginatedWhere = `${pagination.field} ${operator} ${pagination.cursor || ''}`;
   }
 
-  return formattedWhere;
+  // Short circuit if no clauses
+  if (!formattedWhere && !paginatedWhere) return '';
+
+  // Return the combined clauses
+  return `WHERE ${(paginatedWhere && formattedWhere) ? `(${formattedWhere}) ${AndOr.And} ` : formattedWhere}${paginatedWhere}`;
 }
 
 /**  Converts a list of Expansion outlines to a QueryConfig object */
