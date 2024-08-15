@@ -4,7 +4,7 @@ import { FromAlias, IdField, TempFromAlias } from "../utils/query.utils";
 import { getType } from "../utils/object.utils";
 
 /** Updates one record in a PostgreSQL database */
-export async function updateMany(client: Client, body: QueryDefinition) {
+export async function updateMany(client: Client, body: QueryDefinition): Promise<any> {
   if (!body.data) throw new Error('No data provided');
   const data = Array.isArray(body.data) ? body.data : [body.data];
 

@@ -1,6 +1,6 @@
 {
   "name": "unconventional-pg-queries",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A lightweight postgres query builder",
   "repository": {
     "type": "git",
