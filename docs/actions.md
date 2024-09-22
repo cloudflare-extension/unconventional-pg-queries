@@ -130,3 +130,11 @@ enum SqlWhereOperator {
   BitwiseAnd = '&'
 }
 ```
+
+#### SubAction
+```ts
+enum SubAction {
+  Count = 'count',
+  Increment = 'increment'
+}
+```

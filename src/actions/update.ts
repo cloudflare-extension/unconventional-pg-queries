@@ -1,4 +1,4 @@
-import { QueryDefinition } from "../types/db.types";
+import { QueryDefinition, SubAction } from "../types/db.types";
 import { Client } from "pg";
 import { FromAlias, compileWhere } from "../utils/query.utils";
 
@@ -17,7 +17,14 @@ export async function update(client: Client, body: QueryDefinition) {
   Object.entries(data).forEach(([key, value], index) => {
     if (body.expand?.[key]) return; // Exclude relations
 
-    columns += `, "${key}" = $${index + 1}`;
+    let valueHolder = `$${index + 1}`;  
+    // Increment value if subAction is set
+    if (body.subAction === SubAction.Increment) {
+      valueHolder = `"${key}" + $${index + 1}`
+      value = Number(value) || 0; 
+    }
+
+    columns += `, "${key}" = ${valueHolder}`;
     values.push(value ?? null);
   });
 

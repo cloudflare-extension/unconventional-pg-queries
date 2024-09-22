@@ -215,6 +215,8 @@ ORDER BY fromref."isActive" DESC, fromref."age" ASC
 
 ### Count Results
 
+Adding the `subAction: SubAction.Count` field to your query definition returns the count of records in the table.
+
 **Definition**
 ```ts
 {
