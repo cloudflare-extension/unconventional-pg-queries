@@ -12,7 +12,7 @@ const response = await update(client, definition);
 - table
 - data
 - [where](/concepts/where)
-- [increment](#increment)
+- [subAction (increment)](#increment)
 
 ## Examples
 
@@ -71,7 +71,7 @@ Inserts and updates use [parameterized queries](https://node-postgres.com/featur
 ]
 ```
 
-### Increment
+### Increment/Decrement
 
 Adding the `subAction: SubAction.Increment` field to your query definition converts the update method into an increment. Each of the fields in the `data` object are incremented by the value of the field. Negative values are allowed and will decrement the field.
 

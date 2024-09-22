@@ -15,7 +15,7 @@ const response = await selectMany(client, definition);
 - [page](#paginate-results)
 - [limit](#paginate-results)
 - [order](#order-results)
-- [count](#count-results)
+- [subAction (count)](#count-results)
 
 ## Examples
 
@@ -213,7 +213,7 @@ ORDER BY fromref."isActive" DESC, fromref."age" ASC
 ]
 ```
 
-### Count Results
+### Count Rows
 
 Adding the `subAction: SubAction.Count` field to your query definition returns the count of records in the table.
 
