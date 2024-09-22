@@ -39,6 +39,11 @@ export enum AndOr {
   Or = 'OR'
 }
 
+export enum SubAction {
+  Count = 'count',
+  Increment = 'increment'
+}
+
 export interface Expansion {
   type: OneOrMany;
   fromTable: string;
@@ -88,5 +93,5 @@ export interface QueryDefinition {
   page?: SqlPaginate;
   limit?: number;
   data?: Object | Object[];
-  count?: boolean;
+  subAction?: SubAction;
 }

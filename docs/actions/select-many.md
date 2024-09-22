@@ -219,7 +219,7 @@ ORDER BY fromref."isActive" DESC, fromref."age" ASC
 ```ts
 {
     table: 'public.users',
-    count: true
+    subAction: SubAction.Count
 }
 ```
 **Generated SQL**
