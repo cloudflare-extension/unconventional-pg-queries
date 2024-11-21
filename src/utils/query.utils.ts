@@ -67,16 +67,25 @@ export function compileExpand(parents: any[], records: Record<string, Expansion>
   const text = Object.values(records).reduce((acc, expansion) => {
     let select = `SELECT ${ToAlias}.*`;
     if (aliasFrom) select += `, ${FromAlias}.${IdField} as ${TempFromAlias}`;
-    const join = expansion.throughTable ? joinThrough(expansion) : joinDirect(expansion);
 
-    // Collect the parent ids for the WHERE clause (if none, use -1 to avoid SQL errors)
-    const parentIds: number[] = parents.flatMap((item) => {
+    // Collect the parent ids for the INNER JOIN and from values for the WHERE clause (if none, use -1 to avoid SQL errors)
+    const parentIds: number[] = [];
+    const fromIds: number[] = [];
+    parents.forEach((item) => {
+      if (expansion.fromField !== IdField) {
+        parentIds.push(item[IdField]);
+      }
+
       const value = item[expansion.fromField];
-      return value == null ? [] : value;
+      if (value != null) fromIds.push(value);
     });
-    const parentValues = parentIds.length ? parentIds.join() : '-1';
 
-    const where = `WHERE ${FromAlias}."${expansion.fromField}" IN (${parentValues})`;
+    // Produce the join clause
+    const join = expansion.throughTable ? joinThrough(expansion) : joinDirect(expansion, parentIds);
+
+    // Produce the WHERE clause
+    const fromFilterValues = fromIds.length ? fromIds.join() : '-1';
+    const where = `WHERE ${FromAlias}."${expansion.fromField}" IN (${fromFilterValues})`;
 
     return `${acc}${select} ${join} ${where}; `;
   }, '');
@@ -95,9 +104,17 @@ export function compileOrder(clauses: SqlOrder[] | undefined) {
     'ORDER BY ');
 }
 
-/** Produces the join clause for a HasOne, HasMany, or BelongsToOne relation */
-function joinDirect(expansion: Expansion) {
-  return `from ${expansion.fromTable} ${FromAlias} INNER JOIN ${expansion.toTable} ${ToAlias} ON ${FromAlias}."${expansion.fromField}" = ${ToAlias}."${expansion.toField}"`;
+/** 
+ * Produces the join clause for a HasOne, HasMany, or BelongsToOne relation
+ * If fromIds are provided, the FROM clause is wrapped in a subquery to filter the records by the parent ids.
+ * This must be done when the FROM field is not the Id field.
+ */
+function joinDirect(expansion: Expansion, fromIds?: number[]) {
+  const fromTarget = fromIds?.length
+    ? `(SELECT "${expansion.fromField}", "${IdField}" FROM ${expansion.fromTable} WHERE "${IdField}" IN (${fromIds.join()}))`
+    : `${expansion.fromTable}`;
+
+  return `from ${expansion.toTable} ${ToAlias} INNER JOIN ${fromTarget} ${FromAlias} ON ${FromAlias}."${expansion.fromField}" = ${ToAlias}."${expansion.toField}"`;
 }
 
 /** Produces the join clause for a ManyToMany relation */
