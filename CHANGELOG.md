@@ -1,3 +1,10 @@
+### 1.2.0 (2025-03-16)
+
+##### Bug Fixes
+
+*  Handle casting of Dates on updates ([22c37dad](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/22c37dad2008ee4f44ab50fcdf8248e1df1d40a2))
+*  Add type parser to ensure numeric types don't come out of the database as strings ([efb02401](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/efb0240193aeabfd5d8db1c8247e7d23a637c509))
+
 ### 1.1.0 (2024-11-21)
 
 ##### Bug Fixes
