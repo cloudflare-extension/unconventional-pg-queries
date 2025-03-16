@@ -12,7 +12,7 @@ export function getType(value: any) {
     case 'boolean': return SqlType.Boolean;
     case 'number': return Number.isSafeInteger(value) ? SqlType.Int : SqlType.Float;
     case 'string': return datePattern.test(value) ? SqlType.Timestamp : SqlType.Text;
-    case 'object': return SqlType.Jsonb;
+    case 'object': return value instanceof Date ? SqlType.Timestamp : SqlType.Jsonb;
     default: return '';
   }
 }
