@@ -144,17 +144,17 @@ export async function withRelations(client: Client, main: any[], expansions: Rec
       const parent = main.find((item) => item[IdField] === row[TempFromAlias]);
       if (!parent) return;
 
-      // Remove the temporary id from the child record
-      delete row[TempFromAlias];
+      // Create a copy of the row without the TempFromAlias property
+      const { [TempFromAlias]: _, ...rowCopy } = row;
 
-      // Attach the child record to the parent
+      // Attach the child record copy to the parent
       if (expansion.type === OneOrMany.One) {
-        parent[key] = row;
+        parent[key] = rowCopy;
       } else {
         if (!parent[key])
-          parent[key] = [row];
+          parent[key] = [rowCopy];
         else
-          parent[key].push(row);
+          parent[key].push(rowCopy);
       }
     });
 
