@@ -140,22 +140,24 @@ export async function withRelations(client: Client, main: any[], expansions: Rec
 
     // For each child record
     values.forEach((row: any) => {
-      // Find the parent record
-      const parent = main.find((item) => item[IdField] === row[TempFromAlias]);
-      if (!parent) return;
+      // Find all parent records that match
+      const parents = main.filter((item) => item[IdField] === row[TempFromAlias]);
+      if (!parents.length) return;
 
-      // Create a copy of the row without the TempFromAlias property
-      const { [TempFromAlias]: _, ...rowCopy } = row;
+      // Remove the temporary id from the child record
+      delete row[TempFromAlias];
 
-      // Attach the child record copy to the parent
-      if (expansion.type === OneOrMany.One) {
-        parent[key] = rowCopy;
-      } else {
-        if (!parent[key])
-          parent[key] = [rowCopy];
-        else
-          parent[key].push(rowCopy);
-      }
+      // Attach the child record to the parent
+      parents.forEach(parent => {
+        if (expansion.type === OneOrMany.One) {
+          parent[key] = row;
+        } else {
+          if (!parent[key])
+            parent[key] = [row];
+          else
+            parent[key].push(row);
+        }
+      });
     });
 
     index++;
