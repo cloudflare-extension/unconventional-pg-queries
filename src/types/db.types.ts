@@ -65,6 +65,7 @@ export interface SqlOrder {
 export interface SqlWhere {
   field: string;
   jsonPath?: string[];
+  relationPath?: string; // For relation filtering, e.g., "company" for filtering on company.name
   operator: SqlWhereOperator;
   value: string | number | null;
   andOr?: AndOr;

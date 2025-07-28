@@ -6,7 +6,7 @@ import { QueryDefinition } from "../types/db.types";
 export async function destroy(client: Client, body: QueryDefinition): Promise<any> {
   if (!body.where) throw new Error('No id provided');
 
-  const where = compileWhere(body.where);
+  const where = compileWhere(body.where, undefined, undefined, body.expand);
 
   const text = `DELETE FROM ${body.table} ${FromAlias} ${where} RETURNING *`;
   const response = await client.query(text);
