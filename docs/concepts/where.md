@@ -266,6 +266,101 @@ AND (fromref."age")::int > 30 // [!code focus]
 Boolean operators are combined from left to right. Complex combinations involving parenthetical statements like (A OR B) AND (C OR D OR E) are not currently possible.
 :::
 
+## Filtering on Relations
+
+You can filter on related tables using the `relationPath` field. This allows you to filter on fields from related tables using the same `expand` configuration used for expanding relations.
+
+### Basic Relation Filtering
+
+```ts
+{
+    table: 'public.users',
+    expand: {
+        company: {
+            type: OneOrMany.One,
+            fromTable: 'public.users',
+            fromField: 'company_id',
+            toTable: 'public.companies',
+            toField: 'id'
+        }
+    },
+    where: [ // [!code focus]
+        { field: 'name', relationPath: 'company', operator: SqlWhereOperator.Eq, value: 'Costco' } // [!code focus]
+    ]
+}
+```
+
+**Generated SQL**
+```sql
+SELECT * FROM public.users fromref
+INNER JOIN public.companies rel_company ON fromref."company_id" = rel_company."id"
+WHERE rel_company."name" = 'Costco' // [!code focus]
+```
+
+### Many-to-Many Relation Filtering
+
+```ts
+{
+    table: 'public.users',
+    expand: {
+        roles: {
+            type: OneOrMany.Many,
+            fromTable: 'public.users',
+            fromField: 'id',
+            toTable: 'public.roles',
+            toField: 'id',
+            throughTable: 'public.user_roles',
+            throughFromField: 'user_id',
+            throughToField: 'role_id'
+        }
+    },
+    where: [ // [!code focus]
+        { field: 'name', relationPath: 'roles', operator: SqlWhereOperator.Eq, value: 'admin' } // [!code focus]
+    ]
+}
+```
+
+**Generated SQL**
+```sql
+SELECT * FROM public.users fromref
+INNER JOIN public.user_roles throughref_roles ON fromref."id" = throughref_roles."user_id"
+INNER JOIN public.roles rel_roles ON throughref_roles."role_id" = rel_roles."id"
+WHERE rel_roles."name" = 'admin' // [!code focus]
+```
+
+### Combining Direct and Relation Filters
+
+```ts
+{
+    table: 'public.users',
+    expand: {
+        company: {
+            type: OneOrMany.One,
+            fromTable: 'public.users',
+            fromField: 'company_id',
+            toTable: 'public.companies',
+            toField: 'id'
+        }
+    },
+    where: [ // [!code focus]
+        { field: 'age', operator: SqlWhereOperator.Gt, value: 25 }, // [!code focus]
+        { andOr: AndOr.And, field: 'name', relationPath: 'company', operator: SqlWhereOperator.Like, value: 'Tech%' } // [!code focus]
+    ]
+}
+```
+
+**Generated SQL**
+```sql
+SELECT * FROM public.users fromref
+INNER JOIN public.companies rel_company ON fromref."company_id" = rel_company."id"
+WHERE (fromref."age")::int > 25 // [!code focus]
+AND rel_company."name" LIKE 'Tech%' // [!code focus]
+```
+
+:::tip NOTE
+When filtering on relations, you must provide the `expand` configuration in your query definition to define how the tables should be joined. The same configuration is used for both expanding relations and filtering on them.
+:::
+
 ## Filtering on JSON Columns
 
 Filtering is supported on fields nested within JSONB columns as well. To do so, specify the JSONB column in `field` as usual, but also add the `jsonPath` field with the sub-field(s) to target. E.g.

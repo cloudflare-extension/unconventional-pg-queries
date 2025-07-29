@@ -10,11 +10,11 @@ import { describeType } from "./object.utils";
 export const TempFromAlias = 'tmpfromref';
 export const FromAlias = 'fromref';
 export const ToAlias = 'toref';
-export const ThroughAlias = 'throughref';
+export const ThroughAlias = 'thref';
 export const IdField = 'id';
 
 /**  Converts a list of SqlWhere outlines to string of SQL clauses */
-export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPaginate, order?: SqlOrder[]) {
+export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPaginate, order?: SqlOrder[], expand?: Record<string, Expansion>) {
 
   // Create a clause for the pagination cursor
   if (pagination) {
@@ -37,14 +37,22 @@ export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPa
 
   // Format clauses
   const encapsulate = clauses.length > 1 && pagination;
-  return clauses.reduce((acc, clause, index) => {
+  const relationsUsed = new Set<string>();
+  
+  const whereClause = clauses.reduce((acc, clause, index) => {
     let value = clause.value;
     const { isString, isNumber, isBoolean, isNull } = describeType(value);
     const isBitwise = clause.operator === SqlWhereOperator.BitwiseAnd;
     const isArray = [SqlWhereOperator.In, SqlWhereOperator.NotIn].includes(clause.operator);
 
-    // Format field
-    const field = getTargetField(FromAlias, clause.field, {
+    // Collect relations if this clause has a relationPath
+    if (clause.relationPath) {
+      relationsUsed.add(clause.relationPath);
+    }
+
+    // Format field with relation prefix if needed
+    const alias = clause.relationPath ? `${ToAlias}_${clause.relationPath}` : FromAlias;
+    const field = getTargetField(alias, clause.field, {
       jsonPath: clause.jsonPath,
       type: isNumber ? SqlType.Int : isBoolean ? SqlType.Boolean : undefined
     });
@@ -59,6 +67,20 @@ export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPa
     return `${acc}${encapsulate && lastClause ? ')' : ''}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`
   },
     `WHERE ${encapsulate ? '(' : ''}`);
+
+  // Add JOIN clauses for relations
+  let joinClause = '';
+  if (relationsUsed.size > 0 && expand) {
+    joinClause = Array.from(relationsUsed).map((relationName) => {
+      const expansion = expand[relationName];
+      if (!expansion) throw new Error(`Expansion configuration not found for '${relationName}'`);
+
+      return expansion.throughTable ? joinThrough(expansion, { joinsOnly: true, aliasName: relationName }) : joinDirect(expansion, { joinsOnly: true, aliasName: relationName });
+
+    }).join(' ');
+  }
+
+  return `${joinClause} ${whereClause}`.trim();
 }
 
 /**  Converts a list of Expansion outlines to a QueryConfig object */
@@ -81,7 +103,7 @@ export function compileExpand(parents: any[], records: Record<string, Expansion>
     });
 
     // Produce the join clause
-    const join = expansion.throughTable ? joinThrough(expansion) : joinDirect(expansion, parentIds);
+    const join = expansion.throughTable ? joinThrough(expansion) : joinDirect(expansion, { fromIds: parentIds });
 
     // Produce the WHERE clause
     const fromFilterValues = fromIds.length ? fromIds.join() : '-1';
@@ -104,22 +126,46 @@ export function compileOrder(clauses: SqlOrder[] | undefined) {
     'ORDER BY ');
 }
 
+interface JoinOptions {
+  /** If provided, the FROM clause is wrapped in a subquery to filter the records by the parent ids. */
+  fromIds?: number[];
+  /** If true, only the join clause is returned. Otherwise, a FROM clause is included. */
+  joinsOnly?: boolean;
+  /** If provided, use a unique alias for the to and through tables. Otherwise, use the default alias. */
+  aliasName?: string;
+}
+
 /** 
  * Produces the join clause for a HasOne, HasMany, or BelongsToOne relation
  * If fromIds are provided, the FROM clause is wrapped in a subquery to filter the records by the parent ids.
  * This must be done when the FROM field is not the Id field.
  */
-function joinDirect(expansion: Expansion, fromIds?: number[]) {
-  const fromTarget = fromIds?.length
-    ? `(SELECT "${expansion.fromField}", "${IdField}" FROM ${expansion.fromTable} WHERE "${IdField}" IN (${fromIds.join()}))`
+function joinDirect(expansion: Expansion, options?: JoinOptions) {
+  const fromTarget = options?.fromIds?.length
+    ? `(SELECT "${expansion.fromField}", "${IdField}" FROM ${expansion.fromTable} WHERE "${IdField}" IN (${options.fromIds.join()}))`
     : `${expansion.fromTable}`;
 
-  return `from ${expansion.toTable} ${ToAlias} INNER JOIN ${fromTarget} ${FromAlias} ON ${FromAlias}."${expansion.fromField}" = ${ToAlias}."${expansion.toField}"`;
+  // If a relation path is provided, use a unique alias for the to table
+  // This is used to filter by the relation path in the WHERE clause
+  const toAlias = options?.aliasName ? `${ToAlias}_${options.aliasName}` : ToAlias;
+
+  return options?.joinsOnly
+    ? `INNER JOIN ${expansion.toTable} ${toAlias} ON ${FromAlias}."${expansion.fromField}" = ${toAlias}."${expansion.toField}"`
+    : `from ${expansion.toTable} ${toAlias} INNER JOIN ${fromTarget} ${FromAlias} ON ${FromAlias}."${expansion.fromField}" = ${toAlias}."${expansion.toField}"`;
 }
 
 /** Produces the join clause for a ManyToMany relation */
-function joinThrough(expansion: Expansion) {
-  return `from ${expansion.fromTable} ${FromAlias} INNER JOIN ${expansion.throughTable} ${ThroughAlias} ON ${FromAlias}."${expansion.fromField}" = ${ThroughAlias}."${expansion.throughFromField}" INNER JOIN ${expansion.toTable} ${ToAlias} ON ${ThroughAlias}."${expansion.throughToField}" = ${ToAlias}."${expansion.toField}"`;
+function joinThrough(expansion: Expansion, options?: JoinOptions) {
+  const from = options?.joinsOnly ? '' : `from ${expansion.fromTable} ${FromAlias} `;
+
+  // If a relation path is provided, use a unique alias for the to and through tables
+  const throughAlias = options?.aliasName ? `${ThroughAlias}_${options.aliasName}` : ThroughAlias;
+  const through = `INNER JOIN ${expansion.throughTable} ${throughAlias} ON ${FromAlias}."${expansion.fromField}" = ${throughAlias}."${expansion.throughFromField}" `;
+  
+  const toAlias = options?.aliasName ? `${ToAlias}_${options.aliasName}` : ToAlias;
+  const to = `INNER JOIN ${expansion.toTable} ${toAlias} ON ${throughAlias}."${expansion.throughToField}" = ${toAlias}."${expansion.toField}"`;
+
+  return `${from}${through}${to}`;
 }
 
 /** Recursively retrieves all of an item's expanded relations from the DB and attaches them to the item */
