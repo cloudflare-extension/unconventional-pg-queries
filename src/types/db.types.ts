@@ -12,7 +12,8 @@ export enum SqlWhereOperator {
   NotIn = 'NOT IN',
   IsNull = 'IS NULL',
   IsNotNull = 'IS NOT NULL',
-  BitwiseAnd = '&'
+  BitwiseAnd = '&',
+  Similar = "%"
 }
 
 export enum SqlDirection {
