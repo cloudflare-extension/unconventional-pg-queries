@@ -1,13 +1,8 @@
 ### 1.6.0 (2025-10-29)
 
-##### Chores
-
-*  update destroy returning value ([872e39e3](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/872e39e391e592efff1009fbf8fde76abf00ced2))
-
 ##### New Features
 
 *  compound clauses ([5e651924](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/5e6519247919ce6fdbb4c41b2ab5ac122bcf7af0))
-*  Add similarity operator ([afd89fba](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/afd89fbaaaffeac22a8dae3f1442002744ca60f8))
 
 ### 1.5.0 (2025-10-27)
 
