@@ -14,7 +14,7 @@
     "declarationMap": false,
   },
   "exclude": [
-    "test-compile-where.ts",
+    "src/tests/compile-where.test.ts",
     "node_modules",
     "dist"
   ]

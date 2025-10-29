@@ -31,7 +31,7 @@
     "clean": "tsc --build --clean",
     "build": "rm -rf dist && tsc --build",
     "watch": "tsc --watch",
-    "test": "tsc test-compile-where.ts --esModuleInterop --module commonjs --target es2020 && node test-compile-where.js && rm test-compile-where.js",
+    "test": "for file in src/tests/*.test.ts; do tsx \"$file\" || exit 1; done",
     "lint": "eslint . --ext js,jsx,ts,tsx",
     "format": "eslint . --ext js,jsx,ts,tsx --fix",
     "docs:dev": "vitepress dev docs",
@@ -49,6 +49,7 @@
   "devDependencies": {
     "@types/pg": "^8.10.3",
     "pg": "^8.11.3",
+    "tsx": "^4.20.6",
     "typescript": "^5.2.2",
     "vitepress": "^1.0.0-rc.22"
   }

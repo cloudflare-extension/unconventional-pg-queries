@@ -1,5 +1,5 @@
-import { compileWhere } from './src/utils/query.utils';
-import { SqlWhere, SqlWhereOperator, AndOr, SqlDirection, Expansion, OneOrMany } from './src/types/db.types';
+import { compileWhere } from '../utils/query.utils';
+import { SqlWhere, SqlWhereOperator, AndOr, SqlDirection, Expansion, OneOrMany } from '../types/db.types';
 import { strict as assert } from 'assert';
 
 console.log('Testing compileWhere function...\n');
