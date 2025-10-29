@@ -13,6 +13,71 @@ export const ToAlias = 'toref';
 export const ThroughAlias = 'thref';
 export const IdField = 'id';
 
+/** Type guard to determine if a clause is a compound clause (has nested clauses) */
+function isCompoundClause(clause: SqlWhere): boolean {
+  return clause.clauses !== undefined && Array.isArray(clause.clauses) && clause.clauses.length > 0;
+}
+
+/** Recursively checks if any clause (including nested ones) has a relationPath */
+export function hasRelationFilters(clauses: SqlWhere[] | undefined): boolean {
+  if (!clauses?.length) return false;
+  
+  return clauses.some(clause => {
+    if (clause.relationPath) return true;
+    if (isCompoundClause(clause)) return hasRelationFilters(clause.clauses);
+    return false;
+  });
+}
+
+/** Helper function to compile a single clause (and its nested clauses if present) */
+function compileSingleClause(clause: SqlWhere, relationsUsed: Set<string>): string {
+  // Process the main clause
+  let value = clause.value;
+  const { isString, isNumber, isBoolean, isNull } = describeType(value);
+  const isBitwise = clause.operator === SqlWhereOperator.BitwiseAnd;
+  const isArray = [SqlWhereOperator.In, SqlWhereOperator.NotIn].includes(clause.operator);
+
+  // Collect relations if this clause has a relationPath
+  if (clause.relationPath) {
+    relationsUsed.add(clause.relationPath);
+  }
+
+  // Format field with relation prefix if needed
+  // Only apply type casting for JSON paths, not regular field comparisons
+  const alias = clause.relationPath ? `${ToAlias}_${clause.relationPath}` : FromAlias;
+  const needsTypeCast = clause.jsonPath && clause.jsonPath.length > 0;
+  const field = getTargetField(alias, clause.field, {
+    jsonPath: clause.jsonPath,
+    type: needsTypeCast ? (isNumber ? SqlType.Int : isBoolean ? SqlType.Boolean : undefined) : undefined
+  });
+
+  // Format value
+  if (!isArray && !isNull && !isNumber && !isBoolean && !isString) {
+    value = `'${clause.value}'`;
+  }
+
+  const mainClause = `${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`;
+
+  // If there are nested clauses, recursively compile them and wrap everything in parentheses
+  if (isCompoundClause(clause)) {
+    const nestedClauses = compileClausesRecursive(clause.clauses!, relationsUsed);
+    // Add connector before nested clauses (use first nested clause's andOr or default to AND)
+    const connector = clause.clauses![0].andOr || AndOr.And;
+    return `(${mainClause} ${connector} ${nestedClauses})`;
+  }
+
+  return mainClause;
+}
+
+/** Helper function to recursively compile clauses and track relations */
+function compileClausesRecursive(clauses: SqlWhere[], relationsUsed: Set<string>): string {
+  return clauses.reduce((acc, clause, index) => {
+    const connector = index > 0 ? ` ${clause.andOr || AndOr.And} ` : '';
+    const compiledClause = compileSingleClause(clause, relationsUsed);
+    return `${acc}${connector}${compiledClause}`;
+  }, '');
+}
+
 /**  Converts a list of SqlWhere outlines to string of SQL clauses */
 export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPaginate, order?: SqlOrder[], expand?: Record<string, Expansion>) {
 
@@ -39,34 +104,9 @@ export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPa
   const encapsulate = clauses.length > 1 && pagination;
   const relationsUsed = new Set<string>();
   
-  const whereClause = clauses.reduce((acc, clause, index) => {
-    let value = clause.value;
-    const { isString, isNumber, isBoolean, isNull } = describeType(value);
-    const isBitwise = clause.operator === SqlWhereOperator.BitwiseAnd;
-    const isArray = [SqlWhereOperator.In, SqlWhereOperator.NotIn].includes(clause.operator);
-
-    // Collect relations if this clause has a relationPath
-    if (clause.relationPath) {
-      relationsUsed.add(clause.relationPath);
-    }
-
-    // Format field with relation prefix if needed
-    const alias = clause.relationPath ? `${ToAlias}_${clause.relationPath}` : FromAlias;
-    const field = getTargetField(alias, clause.field, {
-      jsonPath: clause.jsonPath,
-      type: isNumber ? SqlType.Int : isBoolean ? SqlType.Boolean : undefined
-    });
-
-    // Format value
-    if (!isArray && !isNull && !isNumber && !isBoolean && !isString) {
-      value = `'${clause.value}'`;
-    }
-
-    const lastClause = clauses && (clauses.length - 1 === index);
-
-    return `${acc}${encapsulate && lastClause ? ')' : ''}${index > 0 ? ` ${clause.andOr || AndOr.And} ` : ''}${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`
-  },
-    `WHERE ${encapsulate ? '(' : ''}`);
+  // Compile clauses recursively
+  const clausesStr = compileClausesRecursive(clauses, relationsUsed);
+  const whereClause = `WHERE ${encapsulate ? `(${clausesStr})` : clausesStr}`;
 
   // Add JOIN clauses for relations
   let joinClause = '';

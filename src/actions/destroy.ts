@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import { FromAlias, compileWhere } from "../utils/query.utils";
+import { FromAlias, compileWhere, hasRelationFilters } from "../utils/query.utils";
 import { QueryDefinition } from "../types/db.types";
 
 /** Deletes records from a PostgreSQL database */
@@ -8,8 +8,8 @@ export async function destroy(client: Client, body: QueryDefinition): Promise<an
   const where = compileWhere(body.where, undefined, undefined, body.expand);
 
   // Return only main table columns when filtering by relations to avoid joined table columns
-  const hasRelationFilters = body.where?.some(clause => clause.relationPath);
-  const target = hasRelationFilters ? `${FromAlias}.*` : '*';
+  const hasRelations = hasRelationFilters(body.where);
+  const target = hasRelations ? `${FromAlias}.*` : '*';
 
   const text = `DELETE FROM ${body.table} ${FromAlias} ${where} RETURNING ${target}`;
   const response = await client.query(text);

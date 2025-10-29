@@ -18,11 +18,11 @@ export function getType(value: any) {
 }
 
 /** Ascertains the type of a given value and returns a list of booleans for each possibility */
-export function describeType(value: string | number | null): TypeDescriptor {
+export function describeType(value: string | number | boolean | null): TypeDescriptor {
   return {
     isString: value ? value.toString().startsWith("'") : false,
     isNumber: value ? !isNaN(+value) : false,
-    isBoolean: value ? value.toString().toLowerCase() === 'true' || value.toString().toLowerCase() === 'false' : false,
+    isBoolean: value ? typeof value === 'boolean' || value.toString().toLowerCase() === 'true' || value.toString().toLowerCase() === 'false' : false,
     isNull: value == null
   };
 }
