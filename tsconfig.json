@@ -12,5 +12,10 @@
     "skipLibCheck": true,
     "declaration": true,
     "declarationMap": false,
-  }
+  },
+  "exclude": [
+    "test-compile-where.ts",
+    "node_modules",
+    "dist"
+  ]
 }

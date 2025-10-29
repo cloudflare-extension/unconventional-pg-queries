@@ -31,6 +31,7 @@
     "clean": "tsc --build --clean",
     "build": "rm -rf dist && tsc --build",
     "watch": "tsc --watch",
+    "test": "tsc test-compile-where.ts --esModuleInterop --module commonjs --target es2020 && node test-compile-where.js && rm test-compile-where.js",
     "lint": "eslint . --ext js,jsx,ts,tsx",
     "format": "eslint . --ext js,jsx,ts,tsx --fix",
     "docs:dev": "vitepress dev docs",
