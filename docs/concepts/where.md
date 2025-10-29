@@ -262,8 +262,82 @@ WHERE fromref."lastName" LIKE 'S%' // [!code focus]
 OR fromref."lastName" IS NULL // [!code focus]
 AND (fromref."age")::int > 30 // [!code focus]
 ```
+
+## Compound Clauses (Parenthetical Grouping)
+
+For complex filtering logic requiring parentheses, add a `clauses` property to any `SqlWhere` clause. The main clause and its nested clauses will be grouped together in parentheses, allowing you to control operator precedence.
+
+### Basic Compound Clause
+
+```ts
+{
+    table: 'public.users',
+    where: [ // [!code focus]
+        { // [!code focus]
+            field: 'age', // [!code focus]
+            operator: SqlWhereOperator.Gt, // [!code focus]
+            value: 18, // [!code focus]
+            clauses: [ // [!code focus]
+                { field: 'age', operator: SqlWhereOperator.Lt, value: 65, andOr: AndOr.And } // [!code focus]
+            ] // [!code focus]
+        }, // [!code focus]
+        { // [!code focus]
+            andOr: AndOr.Or, // [!code focus]
+            field: 'role', // [!code focus]
+            operator: SqlWhereOperator.Eq, // [!code focus]
+            value: 'admin', // [!code focus]
+            clauses: [ // [!code focus]
+                { field: 'verified', operator: SqlWhereOperator.Eq, value: true, andOr: AndOr.And } // [!code focus]
+            ] // [!code focus]
+        } // [!code focus]
+    ] // [!code focus]
+}
+```
+
+**Generated SQL**
+```sql
+SELECT * FROM public.users fromref
+WHERE (fromref."age" > 18 AND fromref."age" < 65) OR (fromref."role" = 'admin' AND fromref."verified" = true) // [!code focus]
+```
+
+### Nested Compound Clauses
+
+Compound clauses can be nested to create even more complex filtering logic:
+
+```ts
+{
+    table: 'public.users',
+    where: [ // [!code focus]
+        { field: 'status', operator: SqlWhereOperator.Eq, value: 'active' }, // [!code focus]
+        { // [!code focus]
+            andOr: AndOr.And, // [!code focus]
+            field: 'age', // [!code focus]
+            operator: SqlWhereOperator.Gt, // [!code focus]
+            value: 18, // [!code focus]
+            clauses: [ // [!code focus]
+                { // [!code focus]
+                    field: 'premium', // [!code focus]
+                    operator: SqlWhereOperator.Eq, // [!code focus]
+                    value: true, // [!code focus]
+                    andOr: AndOr.Or, // [!code focus]
+                    clauses: [ // [!code focus]
+                        { field: 'trial_active', operator: SqlWhereOperator.Eq, value: true, andOr: AndOr.And } // [!code focus]
+                    ] // [!code focus]
+                } // [!code focus]
+            ] // [!code focus]
+        } // [!code focus]
+    ] // [!code focus]
+}
+```
+
+**Generated SQL**
+```sql
+SELECT * FROM public.users fromref
+WHERE fromref."status" = 'active' AND (fromref."age" > 18 OR (fromref."premium" = true AND fromref."trial_active" = true)) // [!code focus]
+```
+
 :::tip NOTE
-Boolean operators are combined from left to right. Complex combinations involving parenthetical statements like (A OR B) AND (C OR D OR E) are not currently possible.
+Any `SqlWhere` clause can optionally have a `clauses` property containing additional nested conditions. When present, the main clause and all nested clauses are wrapped in parentheses and combined using their respective `andOr` operators.
 :::
 
 ## Filtering on Relations

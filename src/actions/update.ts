@@ -1,6 +1,6 @@
 import { QueryDefinition, SubAction } from "../types/db.types";
 import { Client } from "pg";
-import { FromAlias, compileWhere } from "../utils/query.utils";
+import { FromAlias, compileWhere, hasRelationFilters } from "../utils/query.utils";
 
 /** Updates one record in a PostgreSQL database */
 export async function update(client: Client, body: QueryDefinition) {
@@ -11,8 +11,8 @@ export async function update(client: Client, body: QueryDefinition) {
   const where = compileWhere(body.where, undefined, undefined, body.expand);
   
   // Return only main table columns when filtering by relations to avoid joined table columns
-  const hasRelationFilters = body.where?.some(clause => clause.relationPath);
-  const returning = hasRelationFilters ? `${FromAlias}.*` : '*';
+  const hasRelations = hasRelationFilters(body.where);
+  const returning = hasRelations ? `${FromAlias}.*` : '*';
 
   let columns = '',
     values: any[] = [];

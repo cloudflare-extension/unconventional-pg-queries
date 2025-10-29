@@ -68,8 +68,12 @@ export interface SqlWhere {
   jsonPath?: string[];
   relationPath?: string; // For relation filtering, e.g., "company" for filtering on company.name
   operator: SqlWhereOperator;
-  value: string | number | null;
+  value: string | number | boolean | null;
   andOr?: AndOr;
+  
+  /** Optional: Additional clauses to group with this one in parentheses
+  /* When present, generates: (this_clause AND/OR additional_clauses) */
+  clauses?: SqlWhere[];
 }
 
 export interface SqlPaginate {
