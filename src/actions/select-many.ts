@@ -1,7 +1,7 @@
 import { QueryDefinition, SubAction } from "../types/db.types";
 import { Client } from "pg";
 import { isEmpty } from "../utils/object.utils";
-import { FromAlias, compileOrder, compileWhere, withRelations, hasRelationFilters } from "../utils/query.utils";
+import { FromAlias, IdField, compileOrder, compileWhere, withRelations, hasRelationFilters } from "../utils/query.utils";
 
 /** Retrieves multiple records from a PostgreSQL database */
 export async function selectMany(client: Client, body: QueryDefinition) {
@@ -12,7 +12,10 @@ export async function selectMany(client: Client, body: QueryDefinition) {
   
   // Select only main table columns when filtering by relations to avoid joined table columns
   const hasRelations = hasRelationFilters(body.where);
-  const target = count ? 'COUNT(*)' : hasRelations ? `${FromAlias}.*` : '*';
+  // With relation JOINs, one main row can match many joined rows; count distinct main rows
+  const target = count
+    ? (hasRelations ? `COUNT(DISTINCT ${FromAlias}."${IdField}")` : 'COUNT(*)')
+    : hasRelations ? `${FromAlias}.*` : '*';
 
   // Retrieve main records
   const mainRes = await client.query(`SELECT ${target} FROM ${body.table} ${FromAlias} ${where} ${order} ${limit}`);
