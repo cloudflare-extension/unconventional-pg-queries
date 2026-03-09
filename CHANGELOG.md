@@ -1,3 +1,9 @@
+### 1.7.0 (2026-03-09)
+
+##### New Features
+
+*  Support counts with filters and relations ([1ddd09ae](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/1ddd09ae202fc4c6200a6215945912302300c813))
+
 ### 1.6.0 (2025-10-29)
 
 ##### New Features
