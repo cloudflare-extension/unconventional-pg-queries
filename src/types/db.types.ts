@@ -88,6 +88,7 @@ export enum ConflictResolution {
 export interface SqlConflict {
   action: ConflictResolution;
   constraint?: string[];
+  where?: string;
 }
 
 export interface QueryDefinition {

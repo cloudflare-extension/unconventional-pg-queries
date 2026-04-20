@@ -43,7 +43,13 @@ export async function insert(client: Client, body: QueryDefinition) {
   let onConflict = '';
   if (conflictResolver?.constraint?.length) {
     const constraintKeys = conflictResolver.constraint.reduce((acc, key, index) => `${acc}${index > 0 ? ',' : ''}"${key}"`, '')
-    onConflict = `ON CONFLICT (${constraintKeys}) ${conflictResolver.action} ${upsertSet.slice(1)}`
+    const conflictWhere = conflictResolver.where?.trim()
+      ? ` WHERE (${conflictResolver.where.trim()})`
+      : '';
+    const conflictAction = conflictResolver.action === ConflictResolution.doUpdate
+      ? `${conflictResolver.action} ${upsertSet.slice(1)}`
+      : conflictResolver.action;
+    onConflict = `ON CONFLICT (${constraintKeys})${conflictWhere} ${conflictAction}`
   }
 
   // Execute query
