@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@types/pg": "^8.10.3",
+    "generate-changelog": "^1.8.0",
     "pg": "^8.11.3",
     "tsx": "^4.20.6",
     "typescript": "^5.2.2",
