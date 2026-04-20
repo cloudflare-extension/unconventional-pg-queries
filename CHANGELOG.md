@@ -1,3 +1,25 @@
+### 1.8.0 (2026-04-20)
+
+##### Chores
+
+*  Move generate-changelog package from global to dev dep ([6ab45de4](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/6ab45de4c4b4aecd02d2531cb348a257a4fd8d36))
+*  update destroy returning value ([872e39e3](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/872e39e391e592efff1009fbf8fde76abf00ced2))
+
+##### New Features
+
+*  Add optional predicate to upsert constraints ([022d0289](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/022d0289f08aacc4908ff928021513b5573bbe5d))
+*  Support counts with filters and relations ([1ddd09ae](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/1ddd09ae202fc4c6200a6215945912302300c813))
+*  compound clauses ([5e651924](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/5e6519247919ce6fdbb4c41b2ab5ac122bcf7af0))
+*  Add similarity operator ([afd89fba](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/afd89fbaaaffeac22a8dae3f1442002744ca60f8))
+*  Add ability to filter on relations via the SqlWhere structure ([346bf069](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/346bf069ef34f39dc8212826f199f4af2e9f0b46))
+
+##### Bug Fixes
+
+*  Nested expansions can result in the same record appearing multiple times. In this case, 2nd layer expansions weren't being attached to all appearances ([1a3eaf9d](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/1a3eaf9dccf1bd1e5a3e715f0fd1360cace072aa))
+*  Fixed bug where only the first of two records expanding the same relation would get the relation, while the other was blank. ([c1dfe052](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/c1dfe0528e6acb689b7eea2ae3c2aa8102ab9670))
+*  Handle casting of Dates on updates ([22c37dad](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/22c37dad2008ee4f44ab50fcdf8248e1df1d40a2))
+*  Add type parser to ensure numeric types don't come out of the database as strings ([efb02401](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/efb0240193aeabfd5d8db1c8247e7d23a637c509))
+
 ### 1.7.0 (2026-03-09)
 
 ##### New Features
