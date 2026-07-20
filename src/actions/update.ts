@@ -8,32 +8,32 @@ export async function update(client: Client, body: QueryDefinition) {
   const data = Array.isArray(body.data) ? body.data[0] : body.data;
 
   if (!body.where) throw new Error('No id provided');
-  const where = compileWhere(body.where, undefined, undefined, body.expand);
-  
+
   // Return only main table columns when filtering by relations to avoid joined table columns
   const hasRelations = hasRelationFilters(body.where);
   const returning = hasRelations ? `${FromAlias}.*` : '*';
 
-  let columns = '',
-    values: any[] = [];
+  const assignments: string[] = [];
+  const values: unknown[] = [];
 
   // Concatenate field names and values
-  Object.entries(data).forEach(([key, value], index) => {
+  Object.entries(data).forEach(([key, value]) => {
     if (body.expand?.[key]) return; // Exclude relations
 
-    let valueHolder = `$${index + 1}`;  
-    // Increment value if subAction is set
-    if (body.subAction === SubAction.Increment) {
-      valueHolder = `"${key}" + $${index + 1}`
-      value = Number(value) || 0; 
-    }
+    const increment = body.subAction === SubAction.Increment;
+    values.push(increment ? Number(value) || 0 : value ?? null);
+    const placeholder = `$${values.length}`;
+    const valueHolder = increment ? `"${key}" + ${placeholder}` : placeholder;
 
-    columns += `, "${key}" = ${valueHolder}`;
-    values.push(value ?? null);
+    assignments.push(`"${key}" = ${valueHolder}`);
   });
 
-  const text = `UPDATE ${body.table} ${FromAlias} SET ${columns.slice(2)} ${where} RETURNING ${returning}`;
-  const response = await client.query(text, values);
+  if (!assignments.length) throw new Error('No columns to update');
+
+  const where = compileWhere(body.where, { expand: body.expand, values });
+
+  const text = `UPDATE ${body.table} ${FromAlias} SET ${assignments.join(', ')} ${where.text} RETURNING ${returning}`;
+  const response = await client.query(text, where.values);
 
   return response.rowCount === 1 ? response.rows[0] : response.rows;
 }

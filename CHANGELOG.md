@@ -1,3 +1,13 @@
+### 2.0.0 (2026-07-19)
+
+##### Security
+
+*  **Security update in WHERE compilation.** Filter values, `IN`-list elements, and pagination cursors are now bound as query parameters (`$n`) instead of being interpolated into SQL text, and JSON-path keys are escaped. Previously a crafted `value` (or JSON key) could break out of a string literal and alter the query. All read/delete paths (`selectOne`, `selectMany`, `destroy`) and the `update` WHERE clause now execute via `client.query(text, values)`.
+
+##### Breaking Changes
+
+*  `compileWhere` now returns `{ text: string, values: unknown[] }` instead of a `string`, and accepts an optional options object. Callers must pass the returned `values` to `client.query`. The bundled query actions have been updated; only direct external callers of `compileWhere` need changes.
+
 ### 1.8.0 (2026-04-20)
 
 ##### Chores
@@ -76,4 +86,3 @@
 ##### Bug Fixes
 
 *  Expansions where the connecting field is not the id field sometimes failed to return results due to multiple rows meeting the WHERE condition. Added a subquery to the from table in direct joins to prevent this and also make the queries significantly more efficient. ([6f039187](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/6f03918785905e32ccfc9bd5646d4e338ffbbbdc))
-

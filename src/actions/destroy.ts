@@ -5,14 +5,14 @@ import { QueryDefinition } from "../types/db.types";
 /** Deletes records from a PostgreSQL database */
 export async function destroy(client: Client, body: QueryDefinition): Promise<any> {
   if (!body.where) throw new Error('No id provided');
-  const where = compileWhere(body.where, undefined, undefined, body.expand);
+  const where = compileWhere(body.where, { expand: body.expand });
 
   // Return only main table columns when filtering by relations to avoid joined table columns
   const hasRelations = hasRelationFilters(body.where);
   const target = hasRelations ? `${FromAlias}.*` : '*';
 
-  const text = `DELETE FROM ${body.table} ${FromAlias} ${where} RETURNING ${target}`;
-  const response = await client.query(text);
+  const text = `DELETE FROM ${body.table} ${FromAlias} ${where.text} RETURNING ${target}`;
+  const response = await client.query(text, where.values);
 
   return response.rows;
 }
