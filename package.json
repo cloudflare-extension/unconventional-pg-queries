@@ -44,12 +44,12 @@
   },
   "homepage": "https://cloudflare-extension.github.io/unconventional-pg-queries",
   "peerDependencies": {
-    "pg": "^8.23.1"
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1",
     "generate-changelog": "^1.8.0",
-    "pg": "^8.16.3",
+    "pg": "^8.23.0",
     "tsx": "^4.20.6",
     "typescript": "^5.2.2",
     "vitepress": "^1.0.0-rc.22"
