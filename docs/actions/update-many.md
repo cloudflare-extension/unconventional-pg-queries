@@ -42,14 +42,16 @@ Because this update happens in a single operation, all records in the `data` arr
 ```sql
 UPDATE public.users fromref 
 SET "firstName" = tmpfromref."firstName","lastName" = tmpfromref."lastName" 
-from (values ($1::int,$2::text,$3::text),($4::int,$5::text,$6::text)) as tmpfromref("id","firstName","lastName") 
+from (values ((SELECT "id" FROM public.users WHERE false),(SELECT "firstName" FROM public.users WHERE false),(SELECT "lastName" FROM public.users WHERE false)),($1,$2,$3),($4,$5,$6)) as tmpfromref("id","firstName","lastName") 
 WHERE fromref."id" = tmpfromref."id"
-RETURNING *
-
+RETURNING fromref.*
 ```
 ```values
 [ 12, 'Rebecca', 'Rolfe', 85, 'Darth', 'Vader' ]
 ```
+::: info NOTE
+The leading row of `SELECT ... WHERE false` subqueries is a row of nulls typed from the table's own columns. It makes Postgres parse every value as its column's type, even when a column is null in every record, and its null `id` never matches a record.
+:::
 ::: info NOTE
 Inserts and updates use [parameterized queries](https://node-postgres.com/features/queries#parameterized-query) to reduce the risk of SQL injection, hence the separation of SQL and values above.
 :::

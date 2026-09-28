@@ -5,13 +5,13 @@ import { FromAlias, compileWhere, withRelations, hasRelationFilters } from "../u
 
 /** Retrieves one record from a PostgreSQL database */
 export async function selectOne(client: Client, body: QueryDefinition) {
-  const where = compileWhere(body.where, undefined, undefined, body.expand);
-  
+  const where = compileWhere(body.where, { expand: body.expand });
+
   // Select only main table columns when filtering by relations to avoid joined table columns
   const hasRelations = hasRelationFilters(body.where);
   const target = hasRelations ? `${FromAlias}.*` : '*';
 
-  const mainRes = await client.query(`SELECT ${target} FROM ${body.table} ${FromAlias} ${where} LIMIT 1`);
+  const mainRes = await client.query(`SELECT ${target} FROM ${body.table} ${FromAlias} ${where.text} LIMIT 1`, where.values);
   const main = mainRes.rows[0];
   if (!main) return null;
 

@@ -1,7 +1,7 @@
-import { AndOr, Expansion, OneOrMany, SqlDirection, SqlOrder, SqlPaginate, SqlType, SqlWhere, SqlWhereOperator } from "../types/db.types";
-import { Client } from "pg";
-import { FieldModifiers } from "../types/general.types";
-import { describeType } from "./object.utils";
+import { AndOr, Expansion, OneOrMany, SqlDirection, SqlOrder, SqlType, SqlWhere, SqlWhereOperator } from "../types/db.types";
+import { Client, escapeIdentifier } from "pg";
+import { CompiledWhere, CompileWhereOptions, FieldModifiers } from "../types/general.types";
+import { describeType, parseInList, unquoteLiteral } from "./object.utils";
 
 /** 
  * When expanding relations, the parent table's id is attached under this alias
@@ -29,13 +29,23 @@ export function hasRelationFilters(clauses: SqlWhere[] | undefined): boolean {
   });
 }
 
+/** Records a value for parameter binding and returns its `$n` placeholder */
+function bind(values: unknown[], value: unknown): string {
+  values.push(value);
+  return `$${values.length}`;
+}
+
+/** Reduces a filter value to the scalar that should be bound as a query parameter */
+function normalizeValue(value: string | number | boolean | null): unknown {
+  return typeof value === 'string' ? unquoteLiteral(value) : value;
+}
+
 /** Helper function to compile a single clause (and its nested clauses if present) */
-function compileSingleClause(clause: SqlWhere, relationsUsed: Set<string>): string {
-  // Process the main clause
-  let value = clause.value;
-  const { isString, isNumber, isBoolean, isNull } = describeType(value);
+function compileSingleClause(clause: SqlWhere, relationsUsed: Set<string>, values: unknown[]): string {
+  const { isNumber, isBoolean, isNull } = describeType(clause.value);
   const isBitwise = clause.operator === SqlWhereOperator.BitwiseAnd;
-  const isArray = [SqlWhereOperator.In, SqlWhereOperator.NotIn].includes(clause.operator);
+  const isInList = clause.operator === SqlWhereOperator.In || clause.operator === SqlWhereOperator.NotIn;
+  const isNullCheck = clause.operator === SqlWhereOperator.IsNull || clause.operator === SqlWhereOperator.IsNotNull;
 
   // Collect relations if this clause has a relationPath
   if (clause.relationPath) {
@@ -44,23 +54,34 @@ function compileSingleClause(clause: SqlWhere, relationsUsed: Set<string>): stri
 
   // Format field with relation prefix if needed
   // Only apply type casting for JSON paths, not regular field comparisons
-  const alias = clause.relationPath ? `${ToAlias}_${clause.relationPath}` : FromAlias;
+  const alias = clause.relationPath ? escapeIdentifier(`${ToAlias}_${clause.relationPath}`) : FromAlias;
   const needsTypeCast = clause.jsonPath && clause.jsonPath.length > 0;
   const field = getTargetField(alias, clause.field, {
     jsonPath: clause.jsonPath,
     type: needsTypeCast ? (isNumber ? SqlType.Int : isBoolean ? SqlType.Boolean : undefined) : undefined
   });
 
-  // Format value
-  if (!isArray && !isNull && !isNumber && !isBoolean && !isString) {
-    value = `'${clause.value}'`;
+  // Build the comparison. Every user-influenced value is bound as a parameter ($n)
+  // rather than interpolated, so filter input can never alter the SQL structure.
+  let mainClause: string;
+  if (isNullCheck || isNull) {
+    mainClause = `${field} ${isNullCheck ? clause.operator : SqlWhereOperator.IsNull}`;
+  } else if (isInList) {
+    const elements = parseInList(clause.value);
+    if (!elements.length) {
+      mainClause = clause.operator === SqlWhereOperator.In ? 'FALSE' : 'TRUE';
+    } else {
+      const placeholders = elements.map(element => bind(values, element)).join(', ');
+      mainClause = `${field} ${clause.operator} (${placeholders})`;
+    }
+  } else {
+    const placeholder = bind(values, normalizeValue(clause.value));
+    mainClause = `${field} ${clause.operator} ${placeholder}${isBitwise ? ' > 0' : ''}`;
   }
-
-  const mainClause = `${field} ${clause.operator} ${value || ''}${isBitwise ? ' > 0' : ''}`;
 
   // If there are nested clauses, recursively compile them and wrap everything in parentheses
   if (isCompoundClause(clause)) {
-    const nestedClauses = compileClausesRecursive(clause.clauses!, relationsUsed);
+    const nestedClauses = compileClausesRecursive(clause.clauses!, relationsUsed, values);
     // Add connector before nested clauses (use first nested clause's andOr or default to AND)
     const connector = clause.clauses![0].andOr || AndOr.And;
     return `(${mainClause} ${connector} ${nestedClauses})`;
@@ -70,16 +91,21 @@ function compileSingleClause(clause: SqlWhere, relationsUsed: Set<string>): stri
 }
 
 /** Helper function to recursively compile clauses and track relations */
-function compileClausesRecursive(clauses: SqlWhere[], relationsUsed: Set<string>): string {
+function compileClausesRecursive(clauses: SqlWhere[], relationsUsed: Set<string>, values: unknown[]): string {
   return clauses.reduce((acc, clause, index) => {
     const connector = index > 0 ? ` ${clause.andOr || AndOr.And} ` : '';
-    const compiledClause = compileSingleClause(clause, relationsUsed);
+    const compiledClause = compileSingleClause(clause, relationsUsed, values);
     return `${acc}${connector}${compiledClause}`;
   }, '');
 }
 
-/**  Converts a list of SqlWhere outlines to string of SQL clauses */
-export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPaginate, order?: SqlOrder[], expand?: Record<string, Expansion>) {
+/**
+ * Converts a list of SqlWhere outlines to a parameterized SQL WHERE clause.
+ * @returns The clause text and the ordered values to pass to `client.query(text, values)`.
+ */
+export function compileWhere(clauses: SqlWhere[] | undefined, options: CompileWhereOptions = {}): CompiledWhere {
+  const { pagination, order, expand } = options;
+  const effectiveClauses = clauses ? [...clauses] : [];
 
   // Create a clause for the pagination cursor
   if (pagination) {
@@ -90,22 +116,22 @@ export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPa
       if (direction === SqlDirection.Desc) operator = SqlWhereOperator.Lt;
     }
 
-    clauses ||= [];
-    clauses.push({
+    effectiveClauses.push({
       field: pagination.field,
       operator: operator,
       value: pagination.cursor
     });
   }
 
-  if (!clauses?.length) return '';
+  if (!effectiveClauses.length) return { text: '', values: [...(options.values ?? [])] };
 
   // Format clauses
-  const encapsulate = clauses.length > 1 && pagination;
+  const encapsulate = effectiveClauses.length > 1 && pagination;
   const relationsUsed = new Set<string>();
-  
+  const values = [...(options.values ?? [])];
+
   // Compile clauses recursively
-  const clausesStr = compileClausesRecursive(clauses, relationsUsed);
+  const clausesStr = compileClausesRecursive(effectiveClauses, relationsUsed, values);
   const whereClause = `WHERE ${encapsulate ? `(${clausesStr})` : clausesStr}`;
 
   // Add JOIN clauses for relations
@@ -120,7 +146,7 @@ export function compileWhere(clauses: SqlWhere[] | undefined, pagination?: SqlPa
     }).join(' ');
   }
 
-  return `${joinClause} ${whereClause}`.trim();
+  return { text: `${joinClause} ${whereClause}`.trim(), values };
 }
 
 /**  Converts a list of Expansion outlines to a QueryConfig object */
@@ -147,7 +173,7 @@ export function compileExpand(parents: any[], records: Record<string, Expansion>
 
     // Produce the WHERE clause
     const fromFilterValues = fromIds.length ? fromIds.join() : '-1';
-    const where = `WHERE ${FromAlias}."${expansion.fromField}" IN (${fromFilterValues})`;
+    const where = `WHERE ${FromAlias}.${escapeIdentifier(expansion.fromField)} IN (${fromFilterValues})`;
 
     return `${acc}${select} ${join} ${where}; `;
   }, '');
@@ -182,28 +208,29 @@ interface JoinOptions {
  */
 function joinDirect(expansion: Expansion, options?: JoinOptions) {
   const fromTarget = options?.fromIds?.length
-    ? `(SELECT "${expansion.fromField}", "${IdField}" FROM ${expansion.fromTable} WHERE "${IdField}" IN (${options.fromIds.join()}))`
+    ? `(SELECT ${escapeIdentifier(expansion.fromField)}, ${escapeIdentifier(IdField)} FROM ${expansion.fromTable} WHERE ${escapeIdentifier(IdField)} IN (${options.fromIds.join()}))`
     : `${expansion.fromTable}`;
 
   // If a relation path is provided, use a unique alias for the to table
   // This is used to filter by the relation path in the WHERE clause
-  const toAlias = options?.aliasName ? `${ToAlias}_${options.aliasName}` : ToAlias;
+  const toAlias = options?.aliasName ? escapeIdentifier(`${ToAlias}_${options.aliasName}`) : ToAlias;
 
   return options?.joinsOnly
-    ? `INNER JOIN ${expansion.toTable} ${toAlias} ON ${FromAlias}."${expansion.fromField}" = ${toAlias}."${expansion.toField}"`
-    : `from ${expansion.toTable} ${toAlias} INNER JOIN ${fromTarget} ${FromAlias} ON ${FromAlias}."${expansion.fromField}" = ${toAlias}."${expansion.toField}"`;
+    ? `INNER JOIN ${expansion.toTable} ${toAlias} ON ${FromAlias}.${escapeIdentifier(expansion.fromField)} = ${toAlias}.${escapeIdentifier(expansion.toField)}`
+    : `from ${expansion.toTable} ${toAlias} INNER JOIN ${fromTarget} ${FromAlias} ON ${FromAlias}.${escapeIdentifier(expansion.fromField)} = ${toAlias}.${escapeIdentifier(expansion.toField)}`;
 }
 
 /** Produces the join clause for a ManyToMany relation */
 function joinThrough(expansion: Expansion, options?: JoinOptions) {
+  if (!expansion.throughFromField || !expansion.throughToField) throw new Error(`Many-to-many expansion to '${expansion.toTable}' requires throughFromField and throughToField`);
   const from = options?.joinsOnly ? '' : `from ${expansion.fromTable} ${FromAlias} `;
 
   // If a relation path is provided, use a unique alias for the to and through tables
-  const throughAlias = options?.aliasName ? `${ThroughAlias}_${options.aliasName}` : ThroughAlias;
-  const through = `INNER JOIN ${expansion.throughTable} ${throughAlias} ON ${FromAlias}."${expansion.fromField}" = ${throughAlias}."${expansion.throughFromField}" `;
+  const throughAlias = options?.aliasName ? escapeIdentifier(`${ThroughAlias}_${options.aliasName}`) : ThroughAlias;
+  const through = `INNER JOIN ${expansion.throughTable} ${throughAlias} ON ${FromAlias}.${escapeIdentifier(expansion.fromField)} = ${throughAlias}.${escapeIdentifier(expansion.throughFromField)} `;
   
-  const toAlias = options?.aliasName ? `${ToAlias}_${options.aliasName}` : ToAlias;
-  const to = `INNER JOIN ${expansion.toTable} ${toAlias} ON ${throughAlias}."${expansion.throughToField}" = ${toAlias}."${expansion.toField}"`;
+  const toAlias = options?.aliasName ? escapeIdentifier(`${ToAlias}_${options.aliasName}`) : ToAlias;
+  const to = `INNER JOIN ${expansion.toTable} ${toAlias} ON ${throughAlias}.${escapeIdentifier(expansion.throughToField)} = ${toAlias}.${escapeIdentifier(expansion.toField)}`;
 
   return `${from}${through}${to}`;
 }
@@ -254,11 +281,12 @@ export async function withRelations(client: Client, main: any[], expansions: Rec
 
 /** Composes the name of a field from the table name, field name, any nested JSON field names, and a typecast  */
 export function getTargetField(table: string, field: string, options?: FieldModifiers) {
-  let target = `${table}."${field}"`;
+  let target = `${table}.${escapeIdentifier(field)}`;
   const { jsonPath, type } = options || {};
 
   if (jsonPath?.length) {
-    const path = jsonPath.reduce((acc, key, index) => `${acc}${index < jsonPath.length - 1 ? '->' : '->>'}'${key}'`, '');
+    // Escape single quotes in JSON keys so a crafted key cannot break out of the path literal
+    const path = jsonPath.reduce((acc, key, index) => `${acc}${index < jsonPath.length - 1 ? '->' : '->>'}'${key.replace(/'/g, "''")}'`, '');
     target = `${target}${path}`;
   }
 

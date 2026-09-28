@@ -1,4 +1,4 @@
-import { Client } from "pg";
+import { Client, escapeIdentifier } from "pg";
 import { ConflictResolution, QueryDefinition } from "../types/db.types";
 
 /** Inserts one record into a PostgreSQL database */
@@ -23,8 +23,8 @@ export async function insert(client: Client, body: QueryDefinition) {
 
       // Collect column names on first pass through
       if (recordIndex === 0) {
-        columns.push(`"${key}"`);
-        if (conflictResolver?.action === ConflictResolution.doUpdate) upsertSet += `,"${key}" = EXCLUDED."${key}"`;
+        columns.push(escapeIdentifier(key));
+        if (conflictResolver?.action === ConflictResolution.doUpdate) upsertSet += `,${escapeIdentifier(key)} = EXCLUDED.${escapeIdentifier(key)}`;
       }
 
       // Collect values
@@ -42,7 +42,7 @@ export async function insert(client: Client, body: QueryDefinition) {
   // Recover from conflicts
   let onConflict = '';
   if (conflictResolver?.constraint?.length) {
-    const constraintKeys = conflictResolver.constraint.reduce((acc, key, index) => `${acc}${index > 0 ? ',' : ''}"${key}"`, '')
+    const constraintKeys = conflictResolver.constraint.reduce((acc, key, index) => `${acc}${index > 0 ? ',' : ''}${escapeIdentifier(key)}`, '')
     const conflictWhere = conflictResolver.where?.trim()
       ? ` WHERE (${conflictResolver.where.trim()})`
       : '';
