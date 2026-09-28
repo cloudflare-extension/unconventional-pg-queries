@@ -7,8 +7,10 @@ console.log('Testing insert conflict SQL...\n');
 let passedTests = 0;
 let failedTests = 0;
 
+const tests: Promise<void>[] = [];
+
 function test(name: string, testFn: () => Promise<void> | void) {
-  Promise.resolve()
+  tests.push(Promise.resolve()
     .then(testFn)
     .then(() => {
       console.log(`✓ ${name}`);
@@ -18,13 +20,7 @@ function test(name: string, testFn: () => Promise<void> | void) {
       console.log(`✗ ${name}`);
       console.error(`  Error: ${error.message}\n`);
       failedTests++;
-    })
-    .finally(() => {
-      if (passedTests + failedTests === 1) {
-        console.log(`\nTests complete: ${passedTests} passed, ${failedTests} failed`);
-        if (failedTests > 0) process.exit(1);
-      }
-    });
+    }));
 }
 
 test('insert includes a conflict predicate when provided', async () => {
@@ -57,4 +53,30 @@ test('insert includes a conflict predicate when provided', async () => {
     `INSERT INTO public.trade ("external_id","account_id","status") VALUES ($1,$2,$3) ON CONFLICT ("external_id","account_id") WHERE (external_id IS NOT NULL AND external_id <> '') DO NOTHING RETURNING *`
   );
   assert.deepEqual(executedValues, ['abc', 1, 'placed']);
+});
+
+test('SECURITY: insert column and conflict key double quotes are escaped', async () => {
+  let executedText = '';
+  const client = {
+    query: async (text: string) => {
+      executedText = text;
+      return { rows: [] };
+    }
+  };
+
+  await insert(client as any, {
+    table: 'users',
+    data: { 'name") VALUES (1); --': 'x' },
+    conflict: { action: ConflictResolution.doUpdate, constraint: ['id") DO NOTHING; --'] }
+  });
+
+  assert.equal(
+    executedText,
+    `INSERT INTO users ("name"") VALUES (1); --") VALUES ($1) ON CONFLICT ("id"") DO NOTHING; --") DO UPDATE SET "name"") VALUES (1); --" = EXCLUDED."name"") VALUES (1); --" RETURNING *`
+  );
+});
+
+Promise.all(tests).then(() => {
+  console.log(`\nTests complete: ${passedTests} passed, ${failedTests} failed`);
+  if (failedTests > 0) process.exit(1);
 });

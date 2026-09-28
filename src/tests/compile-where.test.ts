@@ -264,7 +264,7 @@ test('Relation filtering with expand', () => {
   };
   const result = compileWhere(clauses, { expand });
   assert.deepEqual(result, {
-    text: `INNER JOIN companies toref_company ON fromref."company_id" = toref_company."id" WHERE toref_company."name" = $1`,
+    text: `INNER JOIN companies "toref_company" ON fromref."company_id" = "toref_company"."id" WHERE "toref_company"."name" = $1`,
     values: ['Costco']
   });
 });
@@ -295,7 +295,7 @@ test('Relation filtering in compound clause', () => {
   };
   const result = compileWhere(clauses, { expand });
   assert.deepEqual(result, {
-    text: `INNER JOIN companies toref_company ON fromref."company_id" = toref_company."id" WHERE fromref."age" > $1 AND (toref_company."name" LIKE $2 AND toref_company."active" = $3)`,
+    text: `INNER JOIN companies "toref_company" ON fromref."company_id" = "toref_company"."id" WHERE fromref."age" > $1 AND ("toref_company"."name" LIKE $2 AND "toref_company"."active" = $3)`,
     values: [25, 'Tech%', true]
   });
 });
@@ -347,6 +347,25 @@ test('SECURITY: JSON path key single quotes are escaped', () => {
   ];
   const result = compileWhere(clauses);
   assert.deepEqual(result, { text: `WHERE fromref."metadata"->>'a''||version()||''' = $1`, values: ['x'] });
+});
+
+test('SECURITY: field double quotes are escaped', () => {
+  const clauses: SqlWhere[] = [
+    { field: 'name" = name OR "id', operator: SqlWhereOperator.Eq, value: 'x' }
+  ];
+  const result = compileWhere(clauses);
+  assert.deepEqual(result, { text: 'WHERE fromref."name"" = name OR ""id" = $1', values: ['x'] });
+});
+
+test('SECURITY: relation path double quotes are escaped', () => {
+  const expand: Record<string, Expansion> = {
+    'co"x': { type: OneOrMany.One, fromTable: 'users', fromField: 'company_id', toTable: 'companies', toField: 'id' }
+  };
+  const result = compileWhere([{ field: 'name', relationPath: 'co"x', operator: SqlWhereOperator.Eq, value: 'x' }], { expand });
+  assert.deepEqual(result, {
+    text: 'INNER JOIN companies "toref_co""x" ON fromref."company_id" = "toref_co""x"."id" WHERE "toref_co""x"."name" = $1',
+    values: ['x']
+  });
 });
 
 test('IN list supports escaped apostrophes', () => {

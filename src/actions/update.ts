@@ -1,5 +1,5 @@
 import { QueryDefinition, SubAction } from "../types/db.types";
-import { Client } from "pg";
+import { Client, escapeIdentifier } from "pg";
 import { FromAlias, compileWhere, hasRelationFilters } from "../utils/query.utils";
 
 /** Updates one record in a PostgreSQL database */
@@ -23,9 +23,9 @@ export async function update(client: Client, body: QueryDefinition) {
     const increment = body.subAction === SubAction.Increment;
     values.push(increment ? Number(value) || 0 : value ?? null);
     const placeholder = `$${values.length}`;
-    const valueHolder = increment ? `"${key}" + ${placeholder}` : placeholder;
+    const valueHolder = increment ? `${escapeIdentifier(key)} + ${placeholder}` : placeholder;
 
-    assignments.push(`"${key}" = ${valueHolder}`);
+    assignments.push(`${escapeIdentifier(key)} = ${valueHolder}`);
   });
 
   if (!assignments.length) throw new Error('No columns to update');

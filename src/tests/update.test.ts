@@ -26,6 +26,18 @@ async function main() {
   );
   assert.deepEqual(capturedValues, ['Alice', 42]);
   console.log('✓ UPDATE parameters remain contiguous when relation fields are skipped');
+
+  await update(client as any, {
+    table: 'users',
+    data: { 'is_admin" = true, "name': 'x' },
+    where: [{ field: 'id', operator: SqlWhereOperator.Eq, value: 7 }]
+  });
+
+  assert.equal(
+    capturedText,
+    'UPDATE users fromref SET "is_admin"" = true, ""name" = $1 WHERE fromref."id" = $2 RETURNING *'
+  );
+  console.log('✓ SECURITY: UPDATE column double quotes are escaped');
 }
 
 main().catch((error) => {

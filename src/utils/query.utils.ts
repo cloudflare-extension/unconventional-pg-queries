@@ -1,5 +1,5 @@
 import { AndOr, Expansion, OneOrMany, SqlDirection, SqlOrder, SqlType, SqlWhere, SqlWhereOperator } from "../types/db.types";
-import { Client } from "pg";
+import { Client, escapeIdentifier } from "pg";
 import { CompiledWhere, CompileWhereOptions, FieldModifiers } from "../types/general.types";
 import { describeType, parseInList, unquoteLiteral } from "./object.utils";
 
@@ -54,7 +54,7 @@ function compileSingleClause(clause: SqlWhere, relationsUsed: Set<string>, value
 
   // Format field with relation prefix if needed
   // Only apply type casting for JSON paths, not regular field comparisons
-  const alias = clause.relationPath ? `${ToAlias}_${clause.relationPath}` : FromAlias;
+  const alias = clause.relationPath ? escapeIdentifier(`${ToAlias}_${clause.relationPath}`) : FromAlias;
   const needsTypeCast = clause.jsonPath && clause.jsonPath.length > 0;
   const field = getTargetField(alias, clause.field, {
     jsonPath: clause.jsonPath,
@@ -173,7 +173,7 @@ export function compileExpand(parents: any[], records: Record<string, Expansion>
 
     // Produce the WHERE clause
     const fromFilterValues = fromIds.length ? fromIds.join() : '-1';
-    const where = `WHERE ${FromAlias}."${expansion.fromField}" IN (${fromFilterValues})`;
+    const where = `WHERE ${FromAlias}.${escapeIdentifier(expansion.fromField)} IN (${fromFilterValues})`;
 
     return `${acc}${select} ${join} ${where}; `;
   }, '');
@@ -208,28 +208,29 @@ interface JoinOptions {
  */
 function joinDirect(expansion: Expansion, options?: JoinOptions) {
   const fromTarget = options?.fromIds?.length
-    ? `(SELECT "${expansion.fromField}", "${IdField}" FROM ${expansion.fromTable} WHERE "${IdField}" IN (${options.fromIds.join()}))`
+    ? `(SELECT ${escapeIdentifier(expansion.fromField)}, ${escapeIdentifier(IdField)} FROM ${expansion.fromTable} WHERE ${escapeIdentifier(IdField)} IN (${options.fromIds.join()}))`
     : `${expansion.fromTable}`;
 
   // If a relation path is provided, use a unique alias for the to table
   // This is used to filter by the relation path in the WHERE clause
-  const toAlias = options?.aliasName ? `${ToAlias}_${options.aliasName}` : ToAlias;
+  const toAlias = options?.aliasName ? escapeIdentifier(`${ToAlias}_${options.aliasName}`) : ToAlias;
 
   return options?.joinsOnly
-    ? `INNER JOIN ${expansion.toTable} ${toAlias} ON ${FromAlias}."${expansion.fromField}" = ${toAlias}."${expansion.toField}"`
-    : `from ${expansion.toTable} ${toAlias} INNER JOIN ${fromTarget} ${FromAlias} ON ${FromAlias}."${expansion.fromField}" = ${toAlias}."${expansion.toField}"`;
+    ? `INNER JOIN ${expansion.toTable} ${toAlias} ON ${FromAlias}.${escapeIdentifier(expansion.fromField)} = ${toAlias}.${escapeIdentifier(expansion.toField)}`
+    : `from ${expansion.toTable} ${toAlias} INNER JOIN ${fromTarget} ${FromAlias} ON ${FromAlias}.${escapeIdentifier(expansion.fromField)} = ${toAlias}.${escapeIdentifier(expansion.toField)}`;
 }
 
 /** Produces the join clause for a ManyToMany relation */
 function joinThrough(expansion: Expansion, options?: JoinOptions) {
+  if (!expansion.throughFromField || !expansion.throughToField) throw new Error(`Many-to-many expansion to '${expansion.toTable}' requires throughFromField and throughToField`);
   const from = options?.joinsOnly ? '' : `from ${expansion.fromTable} ${FromAlias} `;
 
   // If a relation path is provided, use a unique alias for the to and through tables
-  const throughAlias = options?.aliasName ? `${ThroughAlias}_${options.aliasName}` : ThroughAlias;
-  const through = `INNER JOIN ${expansion.throughTable} ${throughAlias} ON ${FromAlias}."${expansion.fromField}" = ${throughAlias}."${expansion.throughFromField}" `;
+  const throughAlias = options?.aliasName ? escapeIdentifier(`${ThroughAlias}_${options.aliasName}`) : ThroughAlias;
+  const through = `INNER JOIN ${expansion.throughTable} ${throughAlias} ON ${FromAlias}.${escapeIdentifier(expansion.fromField)} = ${throughAlias}.${escapeIdentifier(expansion.throughFromField)} `;
   
-  const toAlias = options?.aliasName ? `${ToAlias}_${options.aliasName}` : ToAlias;
-  const to = `INNER JOIN ${expansion.toTable} ${toAlias} ON ${throughAlias}."${expansion.throughToField}" = ${toAlias}."${expansion.toField}"`;
+  const toAlias = options?.aliasName ? escapeIdentifier(`${ToAlias}_${options.aliasName}`) : ToAlias;
+  const to = `INNER JOIN ${expansion.toTable} ${toAlias} ON ${throughAlias}.${escapeIdentifier(expansion.throughToField)} = ${toAlias}.${escapeIdentifier(expansion.toField)}`;
 
   return `${from}${through}${to}`;
 }
@@ -280,7 +281,7 @@ export async function withRelations(client: Client, main: any[], expansions: Rec
 
 /** Composes the name of a field from the table name, field name, any nested JSON field names, and a typecast  */
 export function getTargetField(table: string, field: string, options?: FieldModifiers) {
-  let target = `${table}."${field}"`;
+  let target = `${table}.${escapeIdentifier(field)}`;
   const { jsonPath, type } = options || {};
 
   if (jsonPath?.length) {
