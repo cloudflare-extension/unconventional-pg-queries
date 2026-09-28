@@ -1,3 +1,9 @@
+## 3.0.0 (2026-09-28)
+
+##### Bug Fixes
+
+*  updateMany now casts to the column's actual, not inferred, type. All key names now use the escapeIdentifier method ([85469cc2](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/85469cc234161f7c048d352da03615b3e4a8a8f5))
+
 ### 2.0.0 (2026-07-19)
 
 ##### Security
