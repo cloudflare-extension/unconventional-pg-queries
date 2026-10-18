@@ -185,7 +185,12 @@ export function compileOrder(clauses: SqlOrder[] | undefined) {
   if (!clauses?.length) return '';
 
   return clauses.reduce((acc, clause, index) => {
-    const target = getTargetField(FromAlias, clause.field, { jsonPath: clause.jsonPath });
+    let target = getTargetField(FromAlias, clause.field, { jsonPath: clause.jsonPath });
+    
+    if (clause.coalesce?.length) {
+      const fields = [target, ...clause.coalesce.map(field => getTargetField(FromAlias, field))];
+      target = `COALESCE(${fields.join(', ')})`;
+    }
 
     return `${acc}${index > 0 ? ', ' : ''}${target} ${clause.direction}`
   },

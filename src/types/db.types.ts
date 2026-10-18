@@ -59,6 +59,7 @@ export interface Expansion {
 
 export interface SqlOrder {
   field: string;
+  coalesce?: string[];
   jsonPath?: string[];
   direction: SqlDirection;
 }
