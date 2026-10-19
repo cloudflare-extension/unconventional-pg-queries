@@ -1,3 +1,9 @@
+### 3.1.0 (2026-10-19)
+
+##### New Features
+
+*  Update orderBy and cursor to support coalesce queries ([d9c5d3a4](https://github.com/cloudflare-extension/unconventional-pg-queries/commit/d9c5d3a42f4f73e9c4d25b0ae434711bb42a00d7))
+
 #### 3.0.1 (2026-09-28)
 
 ## 3.0.0 (2026-09-28)
