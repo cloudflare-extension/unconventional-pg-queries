@@ -120,6 +120,16 @@ AND (fromref."isActive")::boolean = true
 
 ### Paginate Results
 
+The cursor remains the value of the unique `page.field`, normally `id`. Pagination follows the complete requested sort, including COALESCE expressions and mixed directions. The unique cursor field is appended as a tie-breaker when omitted. For custom primary keys, set `idField` on the query definition so the first page uses the same tie-breaker.
+
+ID-only ordering compares directly to the cursor value. Other sorts resolve the cursor row in a subquery within the same SQL statement, using the same filters. A missing or filtered-out cursor row produces an empty page. Sort-value changes between page requests can still move rows; pagination is not a snapshot.
+
+Sorted cursor pagination requires non-null effective sort values. Use COALESCE with a non-null fallback for optional fields, such as `COALESCE(placed_at, created_at)` when `created_at` is NOT NULL. No nullability metadata or schema queries are needed.
+
+When all sort directions match, a row comparison lets PostgreSQL seek directly into a matching index. Mixed directions use individual key comparisons. Cursor values remain inside PostgreSQL, preserving timestamp and integer precision.
+
+For example, `COALESCE(placed_at, created_at) DESC, id DESC` can seek through `(user_id, COALESCE(placed_at, created_at) DESC, id DESC)` when the query filters one user. Add `account_id` after `user_id` in a separate index for queries filtering one account. Additional filters can still cause PostgreSQL to examine more than one page of index entries.
+
 **Definition**
 ```ts
 {

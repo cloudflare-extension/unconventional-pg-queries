@@ -230,7 +230,7 @@ test('Pagination with cursor (ASC)', () => {
       order: [{ field: 'id', direction: SqlDirection.Asc }]
     }
   );
-  assert.deepEqual(result, { text: 'WHERE (fromref."status" = $1 AND fromref."id" > $2)', values: ['active', 100] });
+  assert.deepEqual(result, { text: 'WHERE (fromref."status" = $1) AND fromref."id" > $2', values: ['active', 100] });
 });
 
 // Test 15: Pagination cursor (DESC)
@@ -245,7 +245,7 @@ test('Pagination with cursor (DESC)', () => {
       order: [{ field: 'created_at', direction: SqlDirection.Desc }]
     }
   );
-  assert.deepEqual(result, { text: 'WHERE (fromref."status" = $1 AND fromref."created_at" < $2)', values: ['active', '2024-01-01'] });
+  assert.deepEqual(result, { text: 'WHERE (fromref."status" = $1) AND fromref."created_at" < $2', values: ['active', '2024-01-01'] });
 });
 
 // Test 16: Relation filtering

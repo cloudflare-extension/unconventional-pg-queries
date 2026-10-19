@@ -20,6 +20,7 @@ export interface CompiledWhere {
 }
 
 export interface CompileWhereOptions {
+  table?: string;
   pagination?: SqlPaginate;
   order?: SqlOrder[];
   expand?: Record<string, Expansion>;

@@ -99,53 +99,76 @@ function compileClausesRecursive(clauses: SqlWhere[], relationsUsed: Set<string>
   }, '');
 }
 
-/**
- * Converts a list of SqlWhere outlines to a parameterized SQL WHERE clause.
- * @returns The clause text and the ordered values to pass to `client.query(text, values)`.
- */
-export function compileWhere(clauses: SqlWhere[] | undefined, options: CompileWhereOptions = {}): CompiledWhere {
-  const { pagination, order, expand } = options;
-  const effectiveClauses = clauses ? [...clauses] : [];
+/** Compiles the same sort expression for ordering and cursor comparisons. */
+function orderField(order: SqlOrder, alias: string = FromAlias): string {
+  const field = getTargetField(alias, order.field, { jsonPath: order.jsonPath });
+  return order.coalesce?.length
+    ? `COALESCE(${[field, ...order.coalesce.map(fallback => getTargetField(alias, fallback))].join(', ')})`
+    : field;
+}
 
-  // Create a clause for the pagination cursor
-  if (pagination) {
-    let operator = SqlWhereOperator.Gt;
+/** Compares non-null sort values, using an index range when all directions match. */
+function compileCursor(order: SqlOrder[], source: string): string {
+  const direction = order[0].direction;
+  const sameDirection = order.every(key => key.direction === direction);
 
-    if (order?.length) {
-      const direction = order.find((item) => item.field === pagination.field)?.direction;
-      if (direction === SqlDirection.Desc) operator = SqlWhereOperator.Lt;
-    }
-
-    effectiveClauses.push({
-      field: pagination.field,
-      operator: operator,
-      value: pagination.cursor
-    });
+  // An uncorrelated row subquery becomes index-bound parameters without losing timestamp precision.
+  if (sameDirection) {
+    const fields = order.map(key => orderField(key)).join(', ');
+    const anchor = order.map(key => orderField(key, 'cursorref')).join(', ');
+    const operator = direction === SqlDirection.Desc ? '<' : '>';
+    return `(${fields}) ${operator} (SELECT ${anchor} FROM (${source}) cursorref)`;
   }
 
-  if (!effectiveClauses.length) return { text: '', values: [...(options.values ?? [])] };
+  // Mixed directions need one comparison per key, with preceding keys held equal.
+  const equal: string[] = [];
+  const after: string[] = [];
+  for (const key of order) {
+    const field = orderField(key);
+    const anchor = orderField(key, 'cursorref');
+    const descending = key.direction === SqlDirection.Desc;
+    after.push(`(${[...equal, `${field} ${descending ? '<' : '>'} ${anchor}`].join(' AND ')})`);
+    equal.push(`${field} = ${anchor}`);
+  }
+  return `EXISTS (SELECT 1 FROM (${source}) cursorref WHERE ${after.join(' OR ')})`;
+}
 
-  // Format clauses
-  const encapsulate = effectiveClauses.length > 1 && pagination;
+/** Converts filters and an optional sorted cursor into parameterized SQL. */
+export function compileWhere(clauses: SqlWhere[] | undefined, options: CompileWhereOptions = {}): CompiledWhere {
+  const { pagination, order, expand, table } = options;
   const relationsUsed = new Set<string>();
   const values = [...(options.values ?? [])];
+  const filter = compileClausesRecursive(clauses ?? [], relationsUsed, values);
 
-  // Compile clauses recursively
-  const clausesStr = compileClausesRecursive(effectiveClauses, relationsUsed, values);
-  const whereClause = `WHERE ${encapsulate ? `(${clausesStr})` : clausesStr}`;
-
-  // Add JOIN clauses for relations
+  // Reuse the existing joins and filters when resolving the cursor row.
   let joinClause = '';
   if (relationsUsed.size > 0 && expand) {
-    joinClause = Array.from(relationsUsed).map((relationName) => {
+    joinClause = Array.from(relationsUsed).map(relationName => {
       const expansion = expand[relationName];
       if (!expansion) throw new Error(`Expansion configuration not found for '${relationName}'`);
-
       return expansion.throughTable ? joinThrough(expansion, { joinsOnly: true, aliasName: relationName }) : joinDirect(expansion, { joinsOnly: true, aliasName: relationName });
-
     }).join(' ');
   }
 
+  let condition = filter;
+  if (pagination) {
+    const keys = order?.length ? order : [{ field: pagination.field, direction: SqlDirection.Asc }];
+    const cursor = bind(values, pagination.cursor);
+    const id = getTargetField(FromAlias, pagination.field);
+    const key = keys[0];
+    const idOnly = keys.length === 1 && key.field === pagination.field && !key.jsonPath?.length && !key.coalesce?.length;
+    let boundary: string;
+    if (idOnly) {
+      boundary = `${id} ${key.direction === SqlDirection.Desc ? '<' : '>'} ${cursor}`;
+    } else {
+      if (!table) throw new Error('A table is required to paginate a non-ID sort');
+      const source = `SELECT ${FromAlias}.* FROM ${table} ${FromAlias} ${joinClause} WHERE ${filter ? `(${filter}) AND ` : ''}${id} = ${cursor} LIMIT 1`;
+      boundary = compileCursor(keys, source);
+    }
+    condition = filter ? `(${filter}) AND ${boundary}` : boundary;
+  }
+
+  const whereClause = condition ? `WHERE ${condition}` : '';
   return { text: `${joinClause} ${whereClause}`.trim(), values };
 }
 
@@ -185,12 +208,7 @@ export function compileOrder(clauses: SqlOrder[] | undefined) {
   if (!clauses?.length) return '';
 
   return clauses.reduce((acc, clause, index) => {
-    let target = getTargetField(FromAlias, clause.field, { jsonPath: clause.jsonPath });
-    
-    if (clause.coalesce?.length) {
-      const fields = [target, ...clause.coalesce.map(field => getTargetField(FromAlias, field))];
-      target = `COALESCE(${fields.join(', ')})`;
-    }
+    const target = orderField(clause);
 
     return `${acc}${index > 0 ? ', ' : ''}${target} ${clause.direction}`
   },

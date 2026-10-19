@@ -94,6 +94,7 @@ export interface SqlConflict {
 
 export interface QueryDefinition {
   table: string;
+  idField?: string;
   expand?: Record<string, Expansion>;
   where?: SqlWhere[];
   conflict?: SqlConflict;

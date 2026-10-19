@@ -1,14 +1,20 @@
-import { QueryDefinition, SubAction } from "../types/db.types";
+import { QueryDefinition, SqlDirection, SubAction } from "../types/db.types";
 import { Client } from "pg";
 import { isEmpty } from "../utils/object.utils";
 import { FromAlias, IdField, compileOrder, compileWhere, withRelations, hasRelationFilters } from "../utils/query.utils";
 
 /** Retrieves multiple records from a PostgreSQL database */
 export async function selectMany(client: Client, body: QueryDefinition) {
-  const where = compileWhere(body.where, { pagination: body.page, order: body.order, expand: body.expand });
-  const limit = body.limit ? `LIMIT ${body.limit}` : '';
-  const order = compileOrder(body.order);
   const count = body.subAction === SubAction.Count;
+  const cursorField = body.page?.field ?? body.idField ?? IdField;
+  const keys = [...(body.order ?? [])];
+  if (!count && !keys.some(key => key.field === cursorField && !key.jsonPath?.length && !key.coalesce?.length)) {
+    keys.push({ field: cursorField, direction: keys[keys.length - 1]?.direction ?? SqlDirection.Asc });
+  }
+
+  const where = compileWhere(body.where, { table: body.table, pagination: body.page, order: keys, expand: body.expand });
+  const limit = body.limit ? `LIMIT ${body.limit}` : '';
+  const order = count ? '' : compileOrder(keys);
 
   // Select only main table columns when filtering by relations to avoid joined table columns
   const hasRelations = hasRelationFilters(body.where);
